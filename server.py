@@ -22,7 +22,7 @@ ROOT = Path(__file__).parent
 logger = logging.getLogger(__name__)
 QUERIES: dict[str, str] = {
     name: (ROOT / 'queries' / f'{name}.sql').read_text()
-    for name in ('orders', 'trend', 'supply', 'shipments', 'payments', 'order_bom')
+    for name in ('orders', 'trend', 'supply', 'shipments', 'payments', 'order_bom', 'claims')
 }
 INVALID_DATE = 'Выберите корректную дату: сентябрь 2026 года.'
 

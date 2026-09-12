@@ -313,3 +313,14 @@ tfoot th,tfoot td{border-top:2px solid var(--line);font-weight:650;background:#f
 @media(prefers-reduced-motion:reduce){.skeleton-line,.skeleton-chart,#content[aria-busy=true]::before{animation:none}}
 
 .empty-icon svg{width:28px;height:28px}
+
+/* Customer quality: compact summary with links into the claims register. */
+.claims-panel{margin-top:5px}.claims-stats,.claims-reasons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.claims-stats a,.claims-reasons a{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:8px;border:1px solid var(--line);text-decoration:none}
+.claims-stats strong{font-size:24px;font-variant-numeric:tabular-nums}.claims-stats span,.claims-reasons span{font-size:13px}.claims-reasons{margin-top:5px}.claims-reasons strong{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--blue)}
+.claims-stats a:hover,.claims-reasons a:hover{border-color:var(--blue)}
+[data-density=dense] .claims-stats a,[data-density=dense] .claims-reasons a{padding:5px}
+@media(max-width:950px){.claims-stats,.claims-reasons{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.claims-reasons{grid-template-columns:minmax(0,1fr)}}
+
+.drill-view{grid-template-columns:minmax(0,1fr)}.drill-view>div{min-width:0}

@@ -41,6 +41,7 @@ jobs:
           python -m unittest discover -s tests -v
           for file in dist/*.js; do node --check "$file"; done
           node tests/test_ux.cjs
+          node tests/test_claims.cjs
           sh -n deploy/*.sh
       - name: Build and smoke-test application container
         run: |
