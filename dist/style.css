@@ -392,8 +392,8 @@ tfoot th,tfoot td{border-top:2px solid var(--line);font-weight:650;background:#f
 [data-sidebar=collapsed] .sidebar nav .nav-symbol{width:30px;height:32px;flex-basis:30px}
 [data-sidebar=collapsed] .sidebar nav .nav-symbol svg{width:30px;height:30px}
 
-/* Thermal-device identity: processor package with a temperature sensor. */
-.sidebar .brand-mark{padding:0;flex-shrink:0;line-height:1}
-.sidebar .brand-mark svg{display:block;width:32px;height:32px}
-@media(max-width:950px){.sidebar .brand-mark svg{width:28px;height:28px}}
-[data-sidebar=collapsed] .sidebar .brand-mark svg{width:30px;height:30px}
+/* Minimal thermal-device identity: chip outline and diagonal thermometer. */
+.sidebar .brand-mark{padding:0;flex-shrink:0;line-height:1;background:transparent;color:inherit}
+.sidebar .brand-mark svg{display:block;width:40px;height:40px}
+@media(max-width:950px){.sidebar .brand-mark svg{width:33px;height:33px}}
+[data-sidebar=collapsed] .sidebar .brand-mark svg{width:38px;height:38px}
