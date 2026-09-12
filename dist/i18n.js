@@ -456,6 +456,7 @@ const translationRows = [
 ['Настройки интерфейса','Interface settings','הגדרות ממשק'],
 ['Закрыть настройки','Close settings','סגירת ההגדרות'],
 ['Язык','Language','שפה'],
+['Язык / Language','Language','שפה / Language'],
 ['Тема','Theme','ערכת נושא'],
 ['Оригинальная','Original','מקורית'],
 ['Плоская · 5 px','Flat · 5 px','שטוחה · 5 px'],
