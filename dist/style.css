@@ -385,3 +385,9 @@ tfoot th,tfoot td{border-top:2px solid var(--line);font-weight:650;background:#f
 .sidebar nav.sidebar-utilities{flex-shrink:0;border-top:1px solid currentColor;padding-top:5px;margin-top:10px}
 [data-sidebar=collapsed] .sidebar nav.sidebar-utilities{margin-top:auto}
 @media(max-width:950px){.sidebar nav.sidebar-utilities{margin-top:5px}}
+
+/* Consistent vector navigation icons; currentColor follows all themes and states. */
+.sidebar nav .nav-symbol{display:inline-flex;align-items:center;justify-content:center;flex:0 0 28px;width:28px;height:30px;line-height:1}
+.sidebar nav .nav-symbol svg{display:block;width:28px;height:28px;flex:none}
+[data-sidebar=collapsed] .sidebar nav .nav-symbol{width:30px;height:32px;flex-basis:30px}
+[data-sidebar=collapsed] .sidebar nav .nav-symbol svg{width:30px;height:30px}
