@@ -28,5 +28,20 @@ for(const lang of ['ru','en','he']){
   assert(!/[А-Яа-яЁё]/.test(translated),lang+' claims translation');
  }
 }
+const detail={order_id:102,status:'active',remaining_qty:3,quantity:4,order_date:'2026-09-02',due_date:'2026-09-07',original_due_date:'2026-09-07',fulfillment_status:'overdue',last_shipped_at:'2026-09-06',delay_reason:'Нет комплектующих'};
+ctx.detail=detail;run("settings.language='ru'");
+assert(run('orderClaimsPanel(detail)').includes('Возврат принят'));
+assert(run('orderClaimsPanel(detail)').includes('Брак при включении'));
+assert(!run('orderClaimsPanel(detail)').includes('Нет комплектующих'));
+assert.equal((run('orderClaimsPanel({order_id:101})').match(/RMA-/g)||[]).length,2);
+assert(run('orderDetail(detail)').includes('Причина задержки оставшейся отгрузки'));
+detail.remaining_qty=0;detail.fulfillment_status='shipped';
+assert(!run('orderDetail(detail)').includes('Нет комплектующих'));
+for(const lang of ['en','he']){
+ run(`settings.language='${lang}'`);
+ const html=run('orderClaimsPanel({order_id:101})');
+ const translated=html.replace(/>([^<>]+)</g,(_,txt)=>'>'+run(`tr(${JSON.stringify(txt.trim())})`)+'<');
+ assert(!/[А-Яа-яЁё]/.test(translated));
+}
 run('data.claims=[]');assert(run('renderList("claims")').includes('empty-state'));
 console.log('PASS: claim filters, order links, translations in three languages, and empty state');

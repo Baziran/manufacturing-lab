@@ -2,6 +2,14 @@
 // Russian source strings are stable translation keys. Parameterized entries
 // translate whole messages, preserving numbers and database identifiers.
 const translationRows = [
+["Исполнение исходного заказа", "Original order fulfillment", "ביצוע ההזמנה המקורית"],
+["Причина задержки оставшейся отгрузки", "Reason for delay of remaining shipment", "סיבת העיכוב במשלוח הנותר"],
+["Рекламации по заказу", "Claims for order", "תלונות להזמנה"],
+["Статус обращения относится к указанному изделию, а не ко всему заказу.", "The claim status applies to the listed product, not the entire order.", "סטטוס הפנייה מתייחס למוצר המצוין ולא להזמנה כולה."],
+["Статус рекламации", "Claim status", "סטטוס התלונה"],
+["Возврат не зарегистрирован", "No return recorded", "לא נרשמה החזרה"],
+["Решение не зарегистрировано", "No resolution recorded", "לא נרשם פתרון"],
+["Ниже — исполнение исходного заказа. Возврат изделия не отменяет неотгруженные позиции.", "Original order fulfillment is shown below. A returned item does not cancel unshipped line items.", "ביצוע ההזמנה המקורית מוצג להלן. החזרת מוצר אינה מבטלת פריטים שטרם נשלחו."],
 ["Получен", "Received", "התקבלה"],
 ["Время исполнения заказа", "Order elapsed time", "זמן שחלף מאז ההזמנה"],
 ["На дату отчёта", "As of report date", "נכון לתאריך הדוח"],

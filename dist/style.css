@@ -332,3 +332,5 @@ tfoot th,tfoot td{border-top:2px solid var(--line);font-weight:650;background:#f
 .order-time.complete .order-time-fill{background:#278675}.order-time.late .order-time-fill{background:var(--red)}
 .order-time-caption strong{font-weight:550}.order-time.late .order-time-caption strong{color:var(--red)}
 .order-time.cancelled{padding-top:5px;border-top:1px solid var(--line)}
+
+.fulfillment-label{font-size:12px;color:var(--muted);margin:5px 0}.detail-reason>strong,.detail-reason>span{display:block}.detail-reason>strong{font-size:12px;margin-bottom:5px}.order-claims-panel{max-width:100%;min-width:0}.order-dossier{min-width:0}
