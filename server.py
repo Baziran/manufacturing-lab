@@ -115,6 +115,10 @@ def dashboard(request: Request,
                                     for name, sql in QUERIES.items()}
             data['previous_trend'] = conn.execute(QUERIES['trend'], {
                 'period_start': previous_end.replace(day=1), 'as_of': previous_as_of}).fetchall()
+            # Full historical series for the chart; matched-period series above is for KPI comparisons.
+            previous_chart_end = min(previous_end, today)
+            data['previous_full_trend'] = data['previous_trend'] if previous_chart_end == previous_as_of else conn.execute(
+                QUERIES['trend'], {'period_start': previous_end.replace(day=1), 'as_of': previous_chart_end}).fetchall()
             # Journal documents may belong to an order created before the chosen range.
             related_ids = {r['order_id'] for name in ('shipments', 'payments', 'claims') for r in data[name]}
             related_ids.update(o['order_id'] for c in data['supply'] for o in c['orders'])

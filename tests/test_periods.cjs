@@ -44,3 +44,13 @@ assert(run('cumulativeChart(rows.slice(0,12))').includes('class="today-marker"')
 run("data.report_month='2026-08'");
 assert(!run('cumulativeChart(previous)').includes('class="today-marker"'));
 console.log('PASS: today marker, actual series stop, full calendar axis and comparison cutoff');
+
+run("data.report_month='2026-09';data.previous_full_trend=previous;settings.ghostComparison=true");
+html=run('cumulativeChart(rows.slice(0,12))');
+const lengths=cls=>[...html.matchAll(new RegExp('class="'+cls+'" d="([^"]+)"','g'))].map(m=>(m[1].match(/[ML]/g)||[]).length);
+assert.deepEqual(lengths('current-line'),[12,12]);
+assert.deepEqual(lengths('ghost-line'),[31,31]);
+assert.equal((html.match(/<circle /g)||[]).length,86);
+assert.equal(run('sum(data.previous_trend,"shipped")'),48); // KPI baseline still uses only 12 days.
+assert(html.includes('class="today-marker"'));
+console.log('PASS: full previous-month chart with current-day cutoff and unchanged matched-period KPI baseline');
