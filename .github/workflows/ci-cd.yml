@@ -83,9 +83,9 @@ jobs:
         run: |
           git archive --format=tar.gz HEAD Dockerfile requirements.txt server.py database.py health.py dist queries > /tmp/release.tar.gz
           ssh -i ~/.ssh/demo_deploy -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 "root@$DEPLOY_HOST" "deploy $GITHUB_SHA" < /tmp/release.tar.gz
-          curl --fail --retry 10 --retry-delay 2 "http://$DEPLOY_HOST/api/health" -o /tmp/health.json
+          curl --fail --retry 10 --retry-delay 2 "https://$DEPLOY_HOST/api/health" -o /tmp/health.json
           python3 -c 'import json; assert json.load(open("/tmp/health.json"))["status"] == "ok"'
-          printf '### Demo deployed\nRevision: `%s`\n\n[Open demo](http://%s/)\n' "$GITHUB_SHA" "$DEPLOY_HOST" >> "$GITHUB_STEP_SUMMARY"
+          printf '### Demo deployed\nRevision: `%s`\n\n[Open demo](https://%s/)\n' "$GITHUB_SHA" "$DEPLOY_HOST" >> "$GITHUB_STEP_SUMMARY"
       - name: Remove local credentials
         if: always()
         run: rm -f ~/.ssh/demo_deploy

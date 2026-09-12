@@ -125,3 +125,38 @@ docker compose exec -T db psql -U lab -d manufacturing_lab -v ON_ERROR_STOP=1 < 
 ```
 
 На новой базе Docker применяет миграцию автоматически.
+
+## HTTPS на демонстрационном сервере
+
+Публичный портал: **https://83.147.192.229/**. HTTP перенаправляется на HTTPS с сохранением пути и параметров. Сертификат Let's Encrypt содержит IP-адрес и использует профиль `shortlived` (около шести дней). Домен не требуется.
+
+На сервере применяется дополнительный файл Compose:
+
+```sh
+docker compose --env-file .env.demo -f compose.demo.yaml -f compose.release.json -f compose.https.yaml up -d
+```
+
+`compose.https.yaml` подключает порт 443, конфигурацию Nginx и сертификат только для чтения. Сам сертификат, закрытый ключ и учётная запись ACME хранятся на сервере в `/etc/letsencrypt`, вне репозитория. Каталог `acme/` предназначен только для HTTP-01 challenge. Основной `compose.demo.yaml` остаётся пригодным для первичного запуска без сертификата.
+
+Первичный выпуск после подключения HTTP-каталога проверки (Certbot 5.4+):
+
+```sh
+docker run --rm \
+  -v /etc/letsencrypt:/etc/letsencrypt \
+  -v /var/lib/letsencrypt:/var/lib/letsencrypt \
+  -v /var/log/letsencrypt:/var/log/letsencrypt \
+  -v /opt/manufacturing-demo/acme:/var/www/certbot \
+  certbot/certbot:v5.4.0 certonly --webroot -w /var/www/certbot \
+  --ip-address 83.147.192.229 --cert-name manufacturing-demo-ip \
+  --preferred-profile shortlived --non-interactive --agree-tos --register-unsafely-without-email
+```
+
+Таймер `manufacturing-demo-tls.timer` каждые шесть часов запускает `deploy/renew-tls.sh`. После успешной проверки продления скрипт проверяет конфигурацию Nginx и перезагружает сертификат. Если у сертификата осталось меньше двух дней, выполнение помечается ошибкой. Почтовые уведомления не настроены; состояние видно через systemd:
+
+```sh
+systemctl status manufacturing-demo-tls.timer
+journalctl -u manufacturing-demo-tls.service --since '2 days ago'
+sh /opt/manufacturing-demo/deploy/renew-tls.sh --dry-run
+```
+
+Скрипт использует блокировку от одновременных запусков. Для установки таймера оператор копирует `deploy/manufacturing-demo-tls.{service,timer}` в `/etc/systemd/system`, выполняет `systemctl daemon-reload` и `systemctl enable --now manufacturing-demo-tls.timer`. Веб-контейнер должен запускаться с `compose.https.yaml`; обычный CI/CD пересобирает только приложение и сохраняет существующий HTTPS-контейнер.

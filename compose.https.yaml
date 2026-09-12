@@ -1,0 +1,8 @@
+# Use after the trusted certificate has been issued. HTTP remains for ACME and redirects.
+services:
+  web:
+    ports:
+      - "${DEMO_BIND_ADDRESS:-0.0.0.0}:${DEMO_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/nginx-https.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro

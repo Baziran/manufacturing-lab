@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Manufacturing Demo IP certificate every six hours
+
+[Timer]
+OnCalendar=*-*-* 00,06,12,18:00:00
+RandomizedDelaySec=20min
+Persistent=true
+Unit=manufacturing-demo-tls.service
+
+[Install]
+WantedBy=timers.target

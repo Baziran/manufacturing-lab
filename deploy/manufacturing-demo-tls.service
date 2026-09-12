@@ -1,0 +1,10 @@
+[Unit]
+Description=Renew trusted IP certificate for Manufacturing Demo
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /opt/manufacturing-demo/deploy/renew-tls.sh
+TimeoutStartSec=15min
