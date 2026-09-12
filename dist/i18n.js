@@ -2,6 +2,8 @@
 // Russian source strings are stable translation keys. Parameterized entries
 // translate whole messages, preserving numbers and database identifiers.
 const translationRows = [
+["Сегодня", "Today", "היום"],
+["Ось X — день месяца. Фактические данные — не позже сегодняшнего дня; сравнение — за сопоставимый период.", "X-axis: day of month. Actuals stop at today; comparison covers the matching period.", "ציר X: יום בחודש. נתוני הביצוע מוצגים עד היום; ההשוואה היא לתקופה המקבילה."],
 ["Отбор по дате создания заказа", "Filtered by order creation date", "סינון לפי תאריך יצירת ההזמנה"],
 ["Отбор по дате отгрузки", "Filtered by shipment date", "סינון לפי תאריך המשלוח"],
 ["Отбор по дате оплаты", "Filtered by payment date", "סינון לפי תאריך התשלום"],

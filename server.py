@@ -3,6 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timezone, timedelta
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Annotated, Any, AsyncIterator
 
@@ -24,6 +25,10 @@ QUERIES: dict[str, str] = {
     name: (ROOT / 'queries' / f'{name}.sql').read_text()
     for name in ('orders', 'trend', 'supply', 'shipments', 'payments', 'order_bom', 'claims')
 }
+def business_today() -> date:
+    return datetime.now(ZoneInfo('Asia/Jerusalem')).date()
+
+
 INVALID_DATE = 'Проверьте период: начальная дата не позже конечной, не более 366 дней.'
 
 
@@ -72,10 +77,10 @@ def queries() -> JSONResponse:
                                                         503: {'description': 'Database unavailable'}})
 def dashboard(request: Request,
               as_of: Annotated[date | None, Query(alias='date', description='Legacy inclusive snapshot date.')] = None,
-              month: Annotated[str | None, Query(pattern=r'^20[0-9]{2}-(0[1-9]|1[0-2])$', description='Full calendar month, YYYY-MM.')] = None,
+              month: Annotated[str | None, Query(pattern=r'^20[0-9]{2}-(0[1-9]|1[0-2])$', description='Calendar month, YYYY-MM; actuals stop at today in Israel.')] = None,
               date_from: Annotated[date | None, Query(description='Journal start, inclusive.')] = None,
               date_to: Annotated[date | None, Query(description='Journal end, inclusive.')] = None) -> JSONResponse:
-    """Calendar-month dashboard or inclusive journal range; statuses at period end."""
+    """Calendar-month dashboard or inclusive journal range; no future actuals."""
     if ((date_from is None) != (date_to is None)
             or (month is not None and (as_of is not None or date_from is not None))
             or (as_of is not None and date_from is not None)):
@@ -90,8 +95,17 @@ def dashboard(request: Request,
         start = as_of.replace(day=1)
     if not (date(2000, 1, 1) <= start <= as_of <= date(2099, 12, 31)) or (as_of - start).days > 365:
         return json_response({'error': INVALID_DATE}, 400)
+    requested_end = as_of
+    today = business_today()
+    as_of = min(as_of, today)
     previous_end = start.replace(day=1) - timedelta(days=1)
-    previous_as_of = previous_end if month or date_from else previous_end.replace(day=min(as_of.day, previous_end.day))
+    if as_of < start:
+        # A future reporting period has no actual or comparable elapsed days.
+        previous_as_of = previous_end.replace(day=1) - timedelta(days=1)
+    elif (month and as_of < requested_end) or (not month and not date_from):
+        previous_as_of = previous_end.replace(day=min(as_of.day, previous_end.day))
+    else:
+        previous_as_of = previous_end
     params = {'period_start': start, 'as_of': as_of}
     try:
         with request.app.state.pool.connection() as conn:
@@ -107,8 +121,8 @@ def dashboard(request: Request,
             all_orders = conn.execute(QUERIES['orders'], {'period_start': date(2000, 1, 1), 'as_of': as_of}).fetchall()
             data['related_orders'] = [o for o in all_orders if o['order_id'] in related_ids]
             data['detail_claims'] = conn.execute(QUERIES['claims'], {'period_start': date(2000, 1, 1), 'as_of': as_of}).fetchall()
-        data.update(as_of=as_of, period_start=start, period_end=as_of, report_month=start.strftime('%Y-%m'), fetched_at=datetime.now(timezone.utc), monthly_plan=240000,
-                    previous_as_of=previous_as_of, previous_monthly_plan=240000,
+        data.update(as_of=as_of, period_start=start, period_end=requested_end, today=today, report_month=start.strftime('%Y-%m'), fetched_at=datetime.now(timezone.utc), monthly_plan=240000,
+                    previous_as_of=previous_as_of, previous_month=previous_end.strftime('%Y-%m'), previous_monthly_plan=240000,
                     source='PostgreSQL', inventory_snapshot='2026-09-12')
         return json_response(data)
     except (psycopg.Error, PoolTimeout, TooManyRequests) as exc:

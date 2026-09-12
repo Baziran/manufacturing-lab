@@ -30,3 +30,17 @@ for(const lang of ['en','he']){
  for(const label of ['Месяц отчёта','С даты','По дату включительно','Сравнить с предыдущим месяцем','Отбор по дате отгрузки','Состояние на конец периода'])assert(!/[А-Яа-яЁё]/.test(run(`tr(${JSON.stringify(label)})`)));
 }
 console.log('PASS: month/range requests, inclusive boundaries, older related orders, unequal month lengths, comparison toggle and translations');
+
+run("data.report_month='2026-09';data.today='2026-09-12';data.as_of='2026-09-12';data.previous_trend=previous.slice(0,12);settings.ghostComparison=true");
+html=run('cumulativeChart(rows.slice(0,12))');
+assert(html.includes('class="today-marker"'));
+assert(html.includes('stroke-dasharray="1 3"'));
+assert.equal((html.match(/<circle /g)||[]).length,48);
+const paths=[...html.matchAll(/class="(?:current|ghost)-line" d="([^"]+)"/g)].map(m=>m[1]);
+assert(paths.every(p=>(p.match(/[ML]/g)||[]).length===12));
+assert(html.includes('>30</text>')); // Calendar remains visible after the actuals stop.
+run('settings.ghostComparison=false');
+assert(run('cumulativeChart(rows.slice(0,12))').includes('class="today-marker"'));
+run("data.report_month='2026-08'");
+assert(!run('cumulativeChart(previous)').includes('class="today-marker"'));
+console.log('PASS: today marker, actual series stop, full calendar axis and comparison cutoff');

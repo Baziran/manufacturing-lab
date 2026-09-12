@@ -1,5 +1,6 @@
 """Integration checks against the synthetic PostgreSQL database."""
 import os
+from datetime import date
 import unittest
 from unittest.mock import patch
 
@@ -17,6 +18,8 @@ class ApiTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.config = patch.dict(os.environ, {'DB_POOL_MIN_SIZE': '1', 'DB_POOL_MAX_SIZE': '1'})
         cls.config.start()
+        cls.clock = patch('server.business_today', return_value=date(2026, 9, 30))
+        cls.clock.start()
         cls.client = TestClient(app)
         cls.client.__enter__()
         app.state.pool.wait(timeout=10)
@@ -25,6 +28,7 @@ class ApiTests(unittest.TestCase):
     def tearDownClass(cls) -> None:
         cls.client.__exit__(None, None, None)
         cls.config.stop()
+        cls.clock.stop()
         assert app.state.pool.closed
 
     def test_documents_and_static_routes(self) -> None:
@@ -109,7 +113,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(len(september['trend']), 30)
         self.assertEqual(len(september['previous_trend']), 31)
         self.assertEqual(september['previous_trend'], august['trend'])
-        for month, days, previous_end in [('2024-02', 29, '2024-01-31'), ('2027-01', 31, '2026-12-31'), ('2026-02', 28, '2026-01-31')]:
+        for month, days, previous_end in [('2024-02', 29, '2024-01-31'), ('2026-01', 31, '2025-12-31'), ('2026-02', 28, '2026-01-31')]:
             empty = report(month=month)
             self.assertEqual(len(empty['trend']), days)
             self.assertEqual(empty['previous_as_of'], previous_end)
@@ -136,6 +140,33 @@ class ApiTests(unittest.TestCase):
                        dict(month='2026-09', date='2026-09-12'),
                        dict(month='2026-09', date_from='2026-09-01', date_to='2026-09-02')]:
             self.assertEqual(self.client.get('/api/dashboard', params=params).status_code, 400, params)
+
+    def test_actuals_stop_at_today(self) -> None:
+        with patch('server.business_today', return_value=date(2026, 9, 12)):
+            current = self.client.get('/api/dashboard?month=2026-09').json()
+            self.assertEqual(current['today'], '2026-09-12')
+            self.assertEqual(current['period_end'], '2026-09-30')
+            self.assertEqual(current['as_of'], '2026-09-12')
+            self.assertEqual(current['previous_as_of'], '2026-08-12')
+            self.assertEqual(len(current['trend']), 12)
+            self.assertEqual(len(current['previous_trend']), 12)
+            self.assertEqual(sum(r['amount'] for r in current['shipments']), 161000)
+            self.assertEqual(sum(r['amount'] for r in current['payments']), 182500)
+            self.assertEqual(sum(r['shipped'] for r in current['previous_trend']), 117500)
+            journal = self.client.get('/api/dashboard?date_from=2026-09-01&date_to=2026-09-30').json()
+            self.assertEqual(journal['shipments'], current['shipments'])
+            for key, field in [('orders', 'order_date'), ('shipments', 'shipped_at'), ('payments', 'paid_at'), ('claims', 'opened_at')]:
+                self.assertTrue(all(r[field] <= '2026-09-12' for r in current[key]))
+            future = self.client.get('/api/dashboard?month=2026-10').json()
+            for key in ['trend', 'previous_trend', 'orders', 'shipments', 'payments', 'claims']:
+                self.assertEqual(future[key], [], key)
+            past = self.client.get('/api/dashboard?month=2026-08').json()
+            self.assertEqual(len(past['trend']), 31)
+            self.assertEqual(past['as_of'], '2026-08-31')
+        with patch('server.business_today', return_value=date(2026, 9, 13)):
+            next_day = self.client.get('/api/dashboard?month=2026-09').json()
+            self.assertEqual(len(next_day['trend']), 13)
+            self.assertEqual(next_day['previous_as_of'], '2026-08-13')
 
     def test_pool_reuse_and_rollback(self) -> None:
         pool = app.state.pool
