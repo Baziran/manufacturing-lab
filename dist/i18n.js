@@ -389,7 +389,7 @@ const translationRows = [
 ['Силовой модуль','Power module','מודול הספק'],['Уплотнитель','Seal','אטם']
 ];
 const SETTINGS_KEY='manufacturing-lab.preferences.v1';
-let settings={language:'ru',theme:'flat',detailMode:'drill',density:'full',salesLayout:'race',ghostComparison:true,sidebarCollapsed:false};
+let settings={language:'he',theme:'flat',detailMode:'drill',density:'dense',salesLayout:'race',ghostComparison:true,sidebarCollapsed:false};
 try{const saved=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');for(const [key,valid] of Object.entries({language:['ru','en','he'],theme:['original','flat','flat-israel','dark'],detailMode:['drill','panel'],density:['full','dense'],salesLayout:['classic','race'],ghostComparison:[true,false],sidebarCollapsed:[true,false]})){if(valid.includes(saved[key]))settings[key]=saved[key];}}catch{}
 const locales={ru:'ru-RU',en:'en-GB',he:'he-IL'};
 function tr(source){
