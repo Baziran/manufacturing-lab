@@ -129,8 +129,8 @@
 .metric-link{display:block;text-decoration:none;color:inherit;text-align:start;padding-inline-end:30px}
 .metric-link:hover{border-color:var(--blue);outline:1px solid var(--blue);outline-offset:-1px}
 .metric-link:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
-.metric-open{position:absolute;inset-inline-end:7px;bottom:7px;font-size:17px;color:var(--blue)}
-.metric.emphasis .metric-open{color:#fff}
+
+
 .metric-link .metric-note{padding-inline-end:16px}
 .list-totals{display:flex;align-items:center;gap:5px;white-space:nowrap}
 /* Density is independent of theme. Full preserves the existing table layout. */
@@ -324,3 +324,11 @@ tfoot th,tfoot td{border-top:2px solid var(--line);font-weight:650;background:#f
 @media(max-width:500px){.claims-reasons{grid-template-columns:minmax(0,1fr)}}
 
 .drill-view{grid-template-columns:minmax(0,1fr)}.drill-view>div{min-width:0}
+
+.order-time{margin-top:12px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.order-time-labels,.order-time-caption{display:flex;justify-content:space-between;gap:5px;flex-wrap:wrap;line-height:1.5}
+.order-time-track{height:5px;margin:5px 0;background:var(--line);overflow:hidden}
+.order-time-fill{display:block;height:100%;background:var(--blue)}
+.order-time.complete .order-time-fill{background:#278675}.order-time.late .order-time-fill{background:var(--red)}
+.order-time-caption strong{font-weight:550}.order-time.late .order-time-caption strong{color:var(--red)}
+.order-time.cancelled{padding-top:5px;border-top:1px solid var(--line)}

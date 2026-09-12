@@ -2,6 +2,15 @@
 // Russian source strings are stable translation keys. Parameterized entries
 // translate whole messages, preserving numbers and database identifiers.
 const translationRows = [
+["Получен", "Received", "התקבלה"],
+["Время исполнения заказа", "Order elapsed time", "זמן שחלף מאז ההזמנה"],
+["На дату отчёта", "As of report date", "נכון לתאריך הדוח"],
+["Отгружен полностью", "Fully shipped", "נשלחה במלואה"],
+["Прошло {0} из {1} дн.", "Elapsed {0} of {1} days", "חלפו {0} מתוך {1} ימים"],
+["До срока: {0} дн.", "Due in {0} days", "נותרו {0} ימים למועד"],
+["Просрочка: {0} дн.", "Overdue by {0} days", "איחור של {0} ימים"],
+["Отгружен в срок", "Shipped on time", "נשלחה בזמן"],
+["Заказ отменён — отсчёт остановлен", "Order cancelled — timer stopped", "ההזמנה בוטלה — המעקב נעצר"],
 ["Рекламации и возвраты", "Claims and returns", "תלונות והחזרות"],
 ["Всего обращений", "Total claims", "סך הפניות"],
 ["Открытые рекламации", "Open claims", "תלונות פתוחות"],
