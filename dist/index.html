@@ -9,6 +9,7 @@
   <script src="/i18n.js" defer></script>
   <script src="/ux.js" defer></script>
   <script src="/health.js" defer></script>
+  <script src="/projects.js" defer></script>
   <script src="/app.js" defer></script>
 </head>
 <body>
@@ -21,6 +22,7 @@
       <a href="#orders" data-page="orders" aria-label="Исполнение заказов" title="Исполнение заказов"><span class="nav-symbol" aria-hidden="true">≡</span><span class="nav-text">Исполнение заказов</span><span class="nav-index">02</span></a>
       <a href="#supply" data-page="supply" aria-label="Комплектующие" title="Комплектующие"><span class="nav-symbol" aria-hidden="true">◇</span><span class="nav-text">Комплектующие</span><span class="nav-index">03</span></a>
       <a href="#health" data-page="health" aria-label="Сервер и БД" title="Сервер и БД"><span class="nav-symbol" aria-hidden="true">♡</span><span class="nav-text">Сервер и БД</span><span class="nav-index">04</span></a>
+      <a href="#projects" data-page="projects" aria-label="Проекты" title="Проекты"><span class="nav-symbol" aria-hidden="true">▦</span><span class="nav-text">Проекты</span><span class="nav-index">05</span></a>
     </nav>
     <div class="sidebar-art" aria-hidden="true"></div>
     <div class="sidebar-bottom"><div class="lab-label">УЧЕБНАЯ ФАБРИКА</div><p>Небольшие данные.<br>Настоящие взаимосвязи.</p><div class="source"><span class="source-dot"></span>PostgreSQL · Docker</div><span class="sidebar-note">Синтетический набор · сентябрь 2026</span></div>
@@ -36,6 +38,7 @@
   <dialog id="settings-dialog" aria-labelledby="settings-title">
     <div class="dialog-heading"><h2 id="settings-title">Настройки интерфейса</h2><button class="icon-button" id="close-settings" aria-label="Закрыть настройки">×</button></div>
     <div class="settings-fields">
+      <label class="checkbox-label" for="projects-setting"><input type="checkbox" id="projects-setting"><span>Показывать раздел «Проекты»</span></label>
       <label for="language-setting">Язык<select id="language-setting"><option value="he" translate="no">עברית</option><option value="en" translate="no">English</option><option value="ru" translate="no">Русский</option></select></label>
       <label for="theme-setting">Тема<select id="theme-setting"><option value="original">Оригинальная</option><option value="flat">Плоская · 5 px</option><option value="flat-israel">Плоская · Израиль</option><option value="dark">Тёмная</option></select></label>
       <label for="density-setting">Плотность таблиц<select id="density-setting"><option value="full">Полная</option><option value="dense">Плотная</option></select></label>

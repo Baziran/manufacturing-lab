@@ -23,7 +23,7 @@ ROOT = Path(__file__).parent
 logger = logging.getLogger(__name__)
 QUERIES: dict[str, str] = {
     name: (ROOT / 'queries' / f'{name}.sql').read_text()
-    for name in ('orders', 'trend', 'supply', 'shipments', 'payments', 'order_bom', 'claims')
+    for name in ('orders', 'trend', 'supply', 'shipments', 'payments', 'order_bom', 'claims', 'projects')
 }
 def business_today() -> date:
     return datetime.now(ZoneInfo('Asia/Jerusalem')).date()
@@ -120,7 +120,7 @@ def dashboard(request: Request,
             data['previous_full_trend'] = data['previous_trend'] if previous_chart_end == previous_as_of else conn.execute(
                 QUERIES['trend'], {'period_start': previous_end.replace(day=1), 'as_of': previous_chart_end}).fetchall()
             # Journal documents may belong to an order created before the chosen range.
-            related_ids = {r['order_id'] for name in ('shipments', 'payments', 'claims') for r in data[name]}
+            related_ids = {r['order_id'] for name in ('shipments', 'payments', 'claims', 'projects') for r in data[name]}
             related_ids.update(o['order_id'] for c in data['supply'] for o in c['orders'])
             all_orders = conn.execute(QUERIES['orders'], {'period_start': date(2000, 1, 1), 'as_of': as_of}).fetchall()
             data['related_orders'] = [o for o in all_orders if o['order_id'] in related_ids]

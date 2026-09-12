@@ -6,11 +6,11 @@ const money = v => `${n(v)} <span aria-label="шекелей">₪</span>`;
 const short = v => n(v/1000)+(settings.language==='ru'?' тыс.':settings.language==='he'?' אלף':'k');
 const d = v => v ? new Date(v+'T12:00:00').toLocaleDateString(locales[settings.language],{day:'2-digit',month:'short'}) : '—';
 const sum = (rows,key) => rows.reduce((a,r)=>a+Number(r[key]||0),0);
-const labels = {health:['Сервер и БД','Здоровье сервера и базы данных','04 / ИНФРАСТРУКТУРА','Текущие показатели приложения и PostgreSQL.'],sales:['Продажи','Продажи и денежный поток','01 / КОММЕРЧЕСКИЙ ОБЗОР','От заказа до отгрузки и оплаты — без смешения показателей.'],orders:['Исполнение заказов','Каждый заказ под контролем','02 / ПРОИЗВОДСТВО И ОТГРУЗКИ','Сроки, частичные отгрузки и заказы, которым нужно внимание.'],supply:['Комплектующие','Материалы для ближайших заказов','03 / СНАБЖЕНИЕ И КОМПЛЕКТАЦИЯ','Потребность по BOM, доступный запас и ожидаемые поставки.']};
+const labels = {projects:['Проекты','Проекты и сложные заказы','05 / ПРОЕКТНОЕ ИСПОЛНЕНИЕ','Этапы, зависимости и сроки — в контексте заказов и производства.'],health:['Сервер и БД','Здоровье сервера и базы данных','04 / ИНФРАСТРУКТУРА','Текущие показатели приложения и PostgreSQL.'],sales:['Продажи','Продажи и денежный поток','01 / КОММЕРЧЕСКИЙ ОБЗОР','От заказа до отгрузки и оплаты — без смешения показателей.'],orders:['Исполнение заказов','Каждый заказ под контролем','02 / ПРОИЗВОДСТВО И ОТГРУЗКИ','Сроки, частичные отгрузки и заказы, которым нужно внимание.'],supply:['Комплектующие','Материалы для ближайших заказов','03 / СНАБЖЕНИЕ И КОМПЛЕКТАЦИЯ','Потребность по BOM, доступный запас и ожидаемые поставки.']};
 let data=null, page='sales', selected=null, statusFilter='all', shortageOnly=true, requestId=0, loadedPeriod='', pendingPeriod='', queries=null, listView=null, selectedKind=null;
 const statuses={overdue:'Просрочен',shipped:'Отгружен',in_progress:'В работе',cancelled:'Отменён',unpaid:'Не оплачен',partial:'Частично',paid:'Оплачен',overpaid:'Переплата'};
 function badge(status){return `<span class="badge ${esc(status)}">${esc(statuses[status]||status)}</span>`;}
-const cardLists={health:[],sales:['claims','claims-open','claims-open-received','claims-open-unreceived','claims-returned','claims-closed','claim-transit_damage','claim-power_on_failure','claim-incomplete','claim-spec_mismatch','booked','shipments','payments','receivable','channel-direct','channel-partners','channel-web','new-customers','new-channel-direct','new-channel-partners','new-channel-web','payment-full','payment-partial','payment-none'],orders:['open','late','done','ontime'],supply:['shortages','affected','excess','purchases']};
+const cardLists={projects:[],health:[],sales:['claims','claims-open','claims-open-received','claims-open-unreceived','claims-returned','claims-closed','claim-transit_damage','claim-power_on_failure','claim-incomplete','claim-spec_mismatch','booked','shipments','payments','receivable','channel-direct','channel-partners','channel-web','new-customers','new-channel-direct','new-channel-partners','new-channel-web','payment-full','payment-partial','payment-none'],orders:['open','late','done','ontime'],supply:['shortages','affected','excess','purchases']};
 const cardLabels={claims:'Рекламации и возвраты','claims-open':'Открытые рекламации','claims-open-received':'Открытые · товар получен','claims-open-unreceived':'Открытые · товар не получен','claims-returned':'Товар возвращён','claims-closed':'Закрытые рекламации','claim-transit_damage':'Повреждение при перевозке','claim-power_on_failure':'Брак при включении','claim-incomplete':'Некомплект','claim-spec_mismatch':'Характеристики не соответствуют заявленным','channel-direct':'Прямые продажи','channel-partners':'Партнёры','channel-web':'Сайт','new-customers':'Новые клиенты','new-channel-direct':'Новые клиенты · Прямые продажи','new-channel-partners':'Новые клиенты · Партнёры','new-channel-web':'Новые клиенты · Сайт','payment-full':'Оплачены полностью','payment-partial':'Частично оплачены','payment-none':'Без оплаты',booked:'Принято заказов',shipments:'Отгружено',payments:'Получено оплат',receivable:'Осталось оплатить',open:'В работе',late:'Просрочены',done:'Полностью отгружены',ontime:'Исполнено в срок',shortages:'Дефицитные позиции',affected:'Затронутые заказы',excess:'Есть свободный избыток',purchases:'Ожидаемые поставки'};
 function metric(label,value,note,klass='',symbol=''){
  const key=cardLists[page].find(k=>cardLabels[k]===label);
@@ -217,7 +217,7 @@ function openList(key){
  history.pushState({parent:location.hash},'',`#${page}/list/${key}`);navigate();window.scrollTo({top:0,behavior:'instant'});
 }
 function openRecord(kind,id){
- const base=listView?`#${page}/list/${listView}`:`#${kind==='order'?'orders':'supply'}`;
+ const base=listView?`#${page}/list/${listView}`:`#${kind==='order'?'orders':kind==='project'?'projects':'supply'}`;
  history.pushState({parent:location.hash},'',`${base}/${kind}/${id}`);
  navigate();if(settings.detailMode==='drill')window.scrollTo({top:0,behavior:'instant'});
 }
@@ -225,13 +225,13 @@ function closeRecord(){
  if(history.state?.parent){history.back();}
  else{location.hash=selected!==null&&listView?`#${page}/list/${listView}`:'#'+page;}
 }
-function selectedRecord(){return selectedKind==='order'?[...data.orders,...(data.related_orders||[])].find(o=>o.order_id===selected):data.supply.find(c=>c.component_id===selected);}
-function recordMarkup(record){return selectedKind==='order'?orderDossier(record):componentDetail(record);}
+function selectedRecord(){return selectedKind==='project'?(data.projects||[]).find(p=>p.project_id===selected):selectedKind==='order'?[...data.orders,...(data.related_orders||[])].find(o=>o.order_id===selected):data.supply.find(c=>c.component_id===selected);}
+function recordMarkup(record){return selectedKind==='project'?projectDetail(record):selectedKind==='order'?orderDossier(record):componentDetail(record);}
 
 function renderBreadcrumb(){
  const links=[{label:'Аналитика производства',href:'#sales'},{label:labels[page][0],href:'#'+page}];
  if(listView)links.push({label:listTitle(listView),href:`#${page}/list/${listView}`});
- if(selected!==null){const record=data?selectedRecord():null;links.push({label:record?(selectedKind==='order'?'№ '+record.order_id:record.sku):String(selected),href:location.hash});}
+ if(selected!==null){const record=data?selectedRecord():null;links.push({label:record?(selectedKind==='order'?'№ '+record.order_id:selectedKind==='project'?'PR-'+record.project_id:record.sku):String(selected),href:location.hash});}
  $('#crumb').innerHTML=links.map((link,i)=>`${i?'<span class="crumb-separator" aria-hidden="true">/</span>':''}<a href="${esc(link.href)}" ${i===links.length-1?'aria-current="page"':''}>${esc(link.label)}</a>`).join('');
 }
 function chartDayTooltip(point,index,calendarDays){
@@ -320,13 +320,13 @@ function render(){
   $('#freshness').textContent=healthData?'Последний замер: '+healthTime(healthData.checked_at):'Ожидание показателей…';
   $('#health-auto')?.addEventListener('change',e=>{healthAuto=e.target.checked;scheduleHealth();});
  }else if(data){
-  const detail=settings.detailMode==='drill'&&selected!==null;
+  const detail=(settings.detailMode==='drill'||selectedKind==='project')&&selected!==null;
   if(detail){
    const record=selectedRecord();
    const backLabel=history.state?.parent?.includes('/')?'Назад':'Назад к списку';
    $('#content').innerHTML=`<div class="drill-view"><button class="back-button" data-close><span aria-hidden="true" class="back-arrow">←</span><span>${backLabel}</span></button>${record?`<div class="full-detail">${recordMarkup(record)}</div>`:'<div class="empty">Запись недоступна на выбранную дату.</div>'}</div>`;
 
-  }else if(listView){$('#content').innerHTML=renderList(listView);}else{$('#content').innerHTML=({sales,orders,supply}[page])();}
+  }else if(listView){$('#content').innerHTML=renderList(listView);}else{$('#content').innerHTML=({sales,orders,supply,projects}[page])();}
   $('#order-item-filter')?.addEventListener('change',e=>{itemFilter=e.target.value;render();});
   document.querySelectorAll('[data-order-item]').forEach(b=>b.addEventListener('click',()=>{itemFilter=b.dataset.orderItem;render();}));
   $('#status-filter')?.addEventListener('change',e=>{statusFilter=e.target.value;selected=null;render();});
@@ -336,11 +336,13 @@ function render(){
   document.querySelectorAll('[data-order]').forEach(b=>b.addEventListener('click',()=>openRecord('order',Number(b.dataset.order))));
   document.querySelectorAll('[data-component]').forEach(b=>b.addEventListener('click',()=>openRecord('component',Number(b.dataset.component))));
   document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeRecord));
+  if(page==='projects')bindProjects();
  }
  if(!data&&page!=='health')$('#content').innerHTML=loadingSkeleton();
  if(page!=='health'&&data&&$('#error').hidden)$('#freshness').textContent=freshnessText();
  $('#report-date').hidden=page==='health'||!!listView;
  $('#journal-period').hidden=page==='health'||!listView;
+ document.querySelector('[data-page=projects]').hidden=!settings.projectsEnabled;
  renderBreadcrumb();
  syncSidebar();
  $('#comparison-control').hidden=page!=='sales'||!!listView||selected!==null;
@@ -350,9 +352,10 @@ function render(){
 async function refresh(){if(page==='health')return refreshHealth();const requestedPeriod=periodQuery();pendingPeriod=requestedPeriod;const id=++requestId;$('#content').setAttribute('aria-busy','true');if(!data)$('#content').innerHTML=loadingSkeleton();$('#refresh').disabled=true;$('#error').hidden=true;try{const response=await fetch('/api/dashboard?'+requestedPeriod);const result=await response.json();if(id!==requestId)return;if(!response.ok)throw new Error(result.error||'Не удалось загрузить данные.');data=result;loadedPeriod=requestedPeriod;render();$('#freshness').textContent=freshnessText();}catch(e){if(id!==requestId)return;$('#error').textContent=e.message;$('#error').hidden=false;$('#freshness').textContent='Обновление не выполнено. Показанные данные могут быть неактуальны.';if(!data)$('#content').innerHTML='<div class="empty">Данные недоступны. После восстановления подключения нажмите обновление.</div>';}finally{if(id===requestId){pendingPeriod='';$('#content').setAttribute('aria-busy','false');$('#refresh').disabled=false;localize();}}}
 function navigate(){
  const parts=location.hash.slice(1).split('/');page=labels[parts[0]]?parts[0]:'sales';
+ if(page==='projects'&&!settings.projectsEnabled){history.replaceState(null,'','#sales');return navigate();}
  listView=parts[1]==='list'&&isList(page,parts[2])?parts[2]:null;
  const offset=listView?3:1;
- selectedKind=['order','component'].includes(parts[offset])?parts[offset]:null;
+ selectedKind=['order','component','project'].includes(parts[offset])?parts[offset]:null;
  selected=selectedKind&&parts.length===offset+2&&/^\d+$/.test(parts[offset+1])?Number(parts[offset+1]):null;
  if(page==='health'){selected=null;listView=null;}
  if(selected===null)selectedKind=null;
@@ -370,9 +373,11 @@ $('#refresh').addEventListener('click',refresh);$('#report-month').addEventListe
  refresh();
 });
 for(const id of ['date-from','date-to'])$('#'+id).addEventListener('change',refresh);window.addEventListener('hashchange',navigate);window.addEventListener('popstate',navigate);
-$('#sql-button').addEventListener('click',async()=>{const dialog=$('#sql-dialog');$('#sql-content').textContent='Загрузка запросов…';localize();dialog.showModal();try{if(!queries){const r=await fetch('/api/queries');if(!r.ok)throw new Error();queries=await r.json();}const names=page==='health'?['health_database','health_tables']:selectedKind==='order'?['orders','order_bom']:(listView==='claims'||listView?.startsWith('claims-')||listView?.startsWith('claim-'))?['claims']:listView==='shipments'?['shipments']:listView==='payments'?['payments']:page==='sales'?['orders','trend']:page==='orders'?['orders']:['supply'];$('#sql-content').innerHTML=names.map(name=>`<details open><summary>${({claims:'Рекламации и возвраты',orders:'Заказы, отгрузки и оплаты',trend:'Динамика по дням',supply:'Потребность в комплектующих',shipments:'Отгрузки',payments:'Платежи',order_bom:'Комплектующие заказа',health_database:'Статистика PostgreSQL',health_tables:'Таблицы и обслуживание'})[name]}</summary><pre><code>${esc(queries[name])}</code></pre></details>`).join('');}catch{$('#sql-content').textContent='Не удалось получить запросы. Попробуйте ещё раз.'}finally{localize();}});
+$('#sql-button').addEventListener('click',async()=>{const dialog=$('#sql-dialog');$('#sql-content').textContent='Загрузка запросов…';localize();dialog.showModal();try{if(!queries){const r=await fetch('/api/queries');if(!r.ok)throw new Error();queries=await r.json();}const names=page==='projects'?['projects']:page==='health'?['health_database','health_tables']:selectedKind==='order'?['orders','order_bom']:(listView==='claims'||listView?.startsWith('claims-')||listView?.startsWith('claim-'))?['claims']:listView==='shipments'?['shipments']:listView==='payments'?['payments']:page==='sales'?['orders','trend']:page==='orders'?['orders']:['supply'];$('#sql-content').innerHTML=names.map(name=>`<details open><summary>${({projects:'Проекты и этапы',claims:'Рекламации и возвраты',orders:'Заказы, отгрузки и оплаты',trend:'Динамика по дням',supply:'Потребность в комплектующих',shipments:'Отгрузки',payments:'Платежи',order_bom:'Комплектующие заказа',health_database:'Статистика PostgreSQL',health_tables:'Таблицы и обслуживание'})[name]}</summary><pre><code>${esc(queries[name])}</code></pre></details>`).join('');}catch{$('#sql-content').textContent='Не удалось получить запросы. Попробуйте ещё раз.'}finally{localize();}});
 $('#close-sql').addEventListener('click',()=>$('#sql-dialog').close());$('#sql-dialog').addEventListener('click',e=>{if(e.target===$('#sql-dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
 function updateSettings(){
+ settings.projectsEnabled=$('#projects-setting').checked;
+ if(!settings.projectsEnabled&&page==='projects'){history.replaceState(null,'','#sales');page='sales';selected=null;selectedKind=null;listView=null;}
  settings.language=$('#language-setting').value;
  settings.theme=$('#theme-setting').value;
  settings.detailMode=$('#detail-setting').value;settings.density=$('#density-setting').value;settings.salesLayout=$('#layout-setting').value;
@@ -381,10 +386,11 @@ function updateSettings(){
  localize();
 }
 $('#settings-button').addEventListener('click',()=>{
+ $('#projects-setting').checked=settings.projectsEnabled;
  $('#language-setting').value=settings.language;$('#theme-setting').value=settings.theme;$('#detail-setting').value=settings.detailMode;$('#density-setting').value=settings.density;$('#layout-setting').value=settings.salesLayout;
  localize();$('#settings-dialog').showModal();
 });
-for(const id of ['language-setting','theme-setting','detail-setting','density-setting','layout-setting'])$('#'+id).addEventListener('change',updateSettings);
+for(const id of ['projects-setting','language-setting','theme-setting','detail-setting','density-setting','layout-setting'])$('#'+id).addEventListener('change',updateSettings);
 for(const id of ['close-settings','done-settings'])$('#'+id).addEventListener('click',()=>$('#settings-dialog').close());
 $('#settings-dialog').addEventListener('click',e=>{if(e.target===e.currentTarget){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
 document.addEventListener('visibilitychange',()=>{if(page==='health'&&!document.hidden)refreshHealth();else scheduleHealth();});
@@ -404,7 +410,7 @@ if(document.modelContext?.registerTool){
    if(!data)throw new Error('Dashboard data is not loaded.');
    return {page,preferences:{...settings},as_of:data.as_of,requested_period:periodQuery(),load_error:$('#error').hidden?null:$('#error').textContent,
     status_filter:statusFilter,shortage_only:shortageOnly,selected_id:selected,list_view:listView,order_item_filter:itemFilter,
-    rows:listView?getList(listView).rows:page==='supply'?data.supply.filter(c=>!shortageOnly||c.shortage>0):page==='orders'?data.orders.filter(o=>statusFilter==='all'||o.fulfillment_status===statusFilter):active()};
+    rows:page==='projects'?(data.projects||[]):listView?getList(listView).rows:page==='supply'?data.supply.filter(c=>!shortageOnly||c.shortage>0):page==='orders'?data.orders.filter(o=>statusFilter==='all'||o.fulfillment_status===statusFilter):active()};
   }
  },{signal:lifecycle.signal})).catch(()=>{});}catch{}
  window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true});

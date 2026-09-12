@@ -41,7 +41,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(parameter['schema']['anyOf'][0]['format'], 'date')
         self.assertEqual(self.client.get('/api/unknown').status_code, 404)
         queries = self.client.get('/api/queries').json()
-        self.assertEqual(len(queries), 9)
+        self.assertEqual(len(queries), 10)
 
     def test_validation_and_serialization(self) -> None:
         for value in ('invalid', '', '1999-12-31', '2100-01-01', '2026-09-31'):
@@ -171,6 +171,41 @@ class ApiTests(unittest.TestCase):
             self.assertEqual(len(next_day['trend']), 13)
             self.assertEqual(next_day['previous_as_of'], '2026-08-13')
 
+    def test_projects_progress_dependencies_and_history(self) -> None:
+        report = self.client.get('/api/dashboard').json()
+        projects = {p['project_id']: p for p in report['projects']}
+        self.assertEqual(set(projects), {1, 2, 3})
+        self.assertEqual([projects[i]['progress'] for i in (1, 2, 3)], [25, 10, 100])
+        self.assertEqual([projects[i]['project_status'] for i in (1, 2, 3)], ['risk', 'active', 'done'])
+        self.assertEqual(projects[1]['stages'][2]['stage_status'], 'blocked')
+        self.assertEqual(projects[1]['stages'][3]['stage_status'], 'waiting')
+        order_ids = {o['order_id'] for o in report['orders'] + report['related_orders']}
+        for project in projects.values():
+            self.assertIn(project['order_id'], order_ids)
+            self.assertEqual(sum(s['weight'] for s in project['stages']), 100)
+            self.assertEqual(len(project['stages']), 6)
+            self.assertTrue(all(s['depends_on'] is None or s['depends_on'] < s['stage_no'] for s in project['stages']))
+        earlier = self.client.get('/api/dashboard?date=2026-09-10').json()['projects']
+        self.assertEqual(len(earlier), 2)
+        first = next(p for p in earlier if p['project_id'] == 1)
+        self.assertEqual(first['forecast_at'], first['deadline'])
+        self.assertEqual(first['project_status'], 'active')
+        self.assertEqual(first['stages'][2]['stage_status'], 'active')
+        self.assertIsNone(first['stages'][2]['block_reason'])
+        start = self.client.get('/api/dashboard?date=2026-09-01').json()['projects']
+        self.assertEqual(len(start), 1)
+        self.assertEqual(start[0]['progress'], 25)
+        self.assertIsNone(start[0]['completed_at'])
+        self.assertTrue(all(s['completed_at'] is None for s in start[0]['stages'][2:]))
+        with patch('server.business_today', return_value=date(2026, 10, 1)):
+            carried = self.client.get('/api/dashboard?month=2026-10').json()
+            self.assertEqual({p['project_id'] for p in carried['projects']}, {1, 2})
+            self.assertTrue(all(p['order_id'] in {o['order_id'] for o in carried['related_orders']} for p in carried['projects']))
+        self.assertEqual(self.client.get('/api/dashboard?month=2026-07').json()['projects'], [])
+        with app.state.pool.connection() as conn:
+            for table in ('projects', 'project_stages'):
+                self.assertFalse(conn.execute("SELECT has_table_privilege(current_user, %s, 'UPDATE') AS allowed", (table,)).fetchone()['allowed'])
+
     def test_pool_reuse_and_rollback(self) -> None:
         pool = app.state.pool
         with pool.connection() as conn:
@@ -199,7 +234,7 @@ class ApiTests(unittest.TestCase):
         health.CACHE = None
         recovered = self.client.get('/api/health').json()
         self.assertEqual(recovered['status'], 'ok')
-        self.assertEqual(len(recovered['tables']), 11)
+        self.assertEqual(len(recovered['tables']), 13)
         self.assertEqual(self.client.get('/api/dashboard').status_code, 200)
 
 
