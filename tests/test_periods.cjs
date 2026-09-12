@@ -56,7 +56,7 @@ assert(html.includes('class="today-marker"'));
 console.log('PASS: full previous-month chart with current-day cutoff and unchanged matched-period KPI baseline');
 
 run("data.previous_month='2026-08'");
-ctx.tipPoint={day:'2026-09-12',previousDay:'2026-08-12',a:290500,b:161000,pa:129500,pb:117500};
+ctx.tipPoint={day:'2026-09-12',previousDay:'2026-08-12',a:290500,b:161000,pa:129500,pb:117500,da:0,db:32000,dpa:0,dpb:0};
 for(const lang of ['ru','en','he']){
  run(`settings.language='${lang}'`);
  const tooltip=run('chartDayTooltip(tipPoint,11,30)');
@@ -64,7 +64,7 @@ for(const lang of ['ru','en','he']){
  assert.equal((tooltip.match(/chart-tip-section/g)||[]).length,2);
  if(lang!=='ru')assert(!/[А-Яа-яЁё]/.test(tooltip));
 }
-ctx.tipPoint={previousDay:'2026-08-20',a:null,b:null,pa:200000,pb:190000};
+ctx.tipPoint={previousDay:'2026-08-20',a:null,b:null,pa:200000,pb:190000,da:null,db:null,dpa:1000,dpb:2000};
 run("settings.language='en'");
 html=run('chartDayTooltip(tipPoint,19,30)');
 assert(html.includes('No actual data'));assert(html.includes('190,000'));
@@ -73,3 +73,15 @@ assert(run('chartDayTooltip(tipPoint,30,30)').includes('This month has no such d
 run('settings.ghostComparison=false');
 assert.equal((run('chartDayTooltip(tipPoint,19,30)').match(/chart-tip-section/g)||[]).length,1);
 console.log('PASS: shared tooltip totals, month separation, translations, unavailable days and comparison toggle');
+
+run("settings.language='en';settings.ghostComparison=true");
+ctx.tipPoint={day:'2026-09-12',previousDay:'2026-08-12',a:290500,b:161000,pa:129500,pb:117500,da:0,db:32000,dpa:0,dpb:0};
+html=run('chartDayTooltip(tipPoint,11,30)');
+assert(html.includes('Daily')&&html.includes('Month to date'));
+assert(html.includes('32,000 ₪')&&html.includes('161,000 ₪'));
+assert(html.includes('0 ₪')); // A real zero daily total is not missing data.
+const encoded=run('cumulativeChart(rows.slice(0,12))').match(/data-points="([^"]+)"/)[1];
+const points=JSON.parse(encoded.replace(/&quot;/g,'"'));
+assert.equal(points[11].db,2);assert.equal(points[11].b,24);
+assert.equal(points[12].db,null);assert.equal(points[12].dpb,4);
+console.log('PASS: separate daily and cumulative tooltip amounts, zero activity and future cutoff');

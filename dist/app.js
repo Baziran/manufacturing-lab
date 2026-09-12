@@ -41,6 +41,8 @@ function cumulativeChart(rows,w=900,h=120){
  const todayIndex=data.today?.startsWith(reportMonth)?Number(data.today.slice(-2))-1:null;
  const points=Array.from({length:Math.max(calendarDays,rows.length,previous.length)},(_,i)=>({
   day:rows[i]?.day,previousDay:previous[i]?.day,
+  da:rows[i]?Number(rows[i].booked):null,db:rows[i]?Number(rows[i].shipped):null,
+  dpa:previous[i]?Number(previous[i].booked):null,dpb:previous[i]?Number(previous[i].shipped):null,
   a:rows[i]?(a+=Number(rows[i].booked)):null,b:rows[i]?(b+=Number(rows[i].shipped)):null,
   pa:previous[i]?(pa+=Number(previous[i].booked)):null,pb:previous[i]?(pb+=Number(previous[i].shipped)):null
  }));
@@ -233,15 +235,16 @@ function renderBreadcrumb(){
  $('#crumb').innerHTML=links.map((link,i)=>`${i?'<span class="crumb-separator" aria-hidden="true">/</span>':''}<a href="${esc(link.href)}" ${i===links.length-1?'aria-current="page"':''}>${esc(link.label)}</a>`).join('');
 }
 function chartDayTooltip(point,index,calendarDays){
- const row=(label,value,klass)=>`<div class="chart-tip-row"><span><i class="${klass}"></i>${esc(tr(label))}</span><strong>${n(value)} ₪</strong></div>`;
+ const row=(label,value,daily,klass)=>`<div class="chart-tip-row"><span><i class="${klass}"></i>${esc(tr(label))}</span><span class="chart-tip-number"><bdi>${n(daily)} ₪</bdi></span><strong class="chart-tip-number"><bdi>${n(value)} ₪</bdi></strong></div>`;
  const section=(historical)=>{
   const date=historical?point.previousDay:point.day;
   const month=historical?(data.previous_month||data.previous_as_of.slice(0,7)):(data.report_month||data.as_of.slice(0,7));
   const a=historical?point.pa:point.a,b=historical?point.pb:point.b;
+  const dailyA=historical?point.dpa:point.da,dailyB=historical?point.dpb:point.db;
   const unavailable=!historical&&index>=calendarDays?'В этом месяце нет такого дня':'Нет фактических данных';
-  return `<section class="chart-tip-section ${historical?'historical':'actual'}"><h4><span class="series-sample"></span>${esc(tr(historical?'Прошлый месяц':'Выбранный месяц'))} · ${esc(monthName(month+'-01'))}</h4>${date?`<small>${d(date)}</small>${row('Заказано',a,'booked')}${row('Отгружено',b,'shipped')}`:`<p>${esc(tr(unavailable))}</p>`}</section>`;
+  return `<section class="chart-tip-section ${historical?'historical':'actual'}"><h4><span class="series-sample"></span>${esc(tr(historical?'Прошлый месяц':'Выбранный месяц'))} · ${esc(monthName(month+'-01'))}</h4>${date?`<small>${d(date)}</small><div class="chart-tip-columns"><span></span><span>${esc(tr('За день'))}</span><span>${esc(tr('С начала месяца'))}</span></div>${row('Заказано',a,dailyA,'booked')}${row('Отгружено',b,dailyB,'shipped')}`:`<p>${esc(tr(unavailable))}</p>`}</section>`;
  };
- return `<strong class="chart-tip-title">${esc(tr('День'))} ${index+1}</strong><small>${esc(tr('Накопленным итогом с начала месяца'))}</small>${section(false)}${settings.ghostComparison?section(true):''}`;
+ return `<strong class="chart-tip-title">${esc(tr('День'))} ${index+1}</strong>${section(false)}${settings.ghostComparison?section(true):''}`;
 }
 let chartHoverController=null;
 function bindChartHover(panel){

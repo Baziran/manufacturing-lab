@@ -2,6 +2,8 @@
 // Russian source strings are stable translation keys. Parameterized entries
 // translate whole messages, preserving numbers and database identifiers.
 const translationRows = [
+['За день','Daily','יומי'],
+['С начала месяца','Month to date','מתחילת החודש'],
 ['Выбранный месяц','Selected month','החודש הנבחר'],
 ['Прошлый месяц','Previous month','החודש הקודם'],
 ['Нет фактических данных','No actual data','אין נתוני ביצוע'],

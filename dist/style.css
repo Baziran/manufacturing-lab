@@ -363,3 +363,5 @@ tfoot th,tfoot td{border-top:2px solid var(--line);font-weight:650;background:#f
 [data-theme="flat"] .chart-tooltip,[data-theme="flat-israel"] .chart-tooltip{border-radius:0;padding:8px}
 
 [data-theme=dark]{--chart-panel:#1c2b3b}[data-theme=dark] .chart-tooltip{color:#e1eaf2}.chart:focus-visible{outline:2px solid var(--blue)}
+
+.chart-tooltip{width:350px}.chart-tip-columns,.chart-tip-row{display:grid;grid-template-columns:minmax(65px,1fr) minmax(75px,auto) minmax(85px,auto);gap:8px;align-items:center}.chart-tip-columns{font-size:10px;color:var(--muted);margin:7px 0 4px;text-align:end}.chart-tip-row .chart-tip-number{display:block;text-align:end;white-space:nowrap}
