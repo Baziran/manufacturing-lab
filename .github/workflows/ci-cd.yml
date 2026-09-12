@@ -1,0 +1,86 @@
+name: CI / CD
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy the checked main revision to the demo server
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Start synthetic PostgreSQL database
+        run: |
+          sh deploy/prepare-env.sh .env
+          docker compose up -d --wait db
+      - name: API integration and connection pool tests
+        run: |
+          set -a
+          . ./.env
+          set +a
+          export DB_HOST=127.0.0.1 DB_PORT=55432 DB_PASSWORD="$DASHBOARD_PASSWORD"
+          python -m unittest discover -s tests -v
+          for file in dist/*.js; do node --check "$file"; done
+          sh -n deploy/*.sh
+      - name: Build and smoke-test application container
+        run: |
+          docker compose up -d --build dashboard
+          curl --fail --retry 15 --retry-connrefused --retry-delay 2 http://127.0.0.1:8765/api/dashboard -o /tmp/dashboard.json
+          python -c 'import json; d=json.load(open("/tmp/dashboard.json")); assert len(d["orders"]) == 12'
+          curl --fail http://127.0.0.1:8765/openapi.json -o /tmp/openapi.json
+      - name: Clean up
+        if: always()
+        run: docker compose down -v
+  deploy:
+    needs: checks
+    if: vars.DEPLOY_ENABLED == 'true' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.deploy)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: demo-deployment
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Configure restricted deployment key
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          test -n "$DEPLOY_KEY" && test -n "$KNOWN_HOSTS"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/demo_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/demo_deploy ~/.ssh/known_hosts
+      - name: Publish checked revision
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+        run: |
+          git archive --format=tar.gz HEAD Dockerfile requirements.txt server.py database.py health.py dist queries > /tmp/release.tar.gz
+          ssh -i ~/.ssh/demo_deploy -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 "root@$DEPLOY_HOST" "deploy $GITHUB_SHA" < /tmp/release.tar.gz
+          curl --fail --retry 10 --retry-delay 2 "http://$DEPLOY_HOST/api/health" -o /tmp/health.json
+          python3 -c 'import json; assert json.load(open("/tmp/health.json"))["status"] == "ok"'
+          printf '### Demo deployed\nRevision: `%s`\n\n[Open demo](http://%s/)\n' "$GITHUB_SHA" "$DEPLOY_HOST" >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove local credentials
+        if: always()
+        run: rm -f ~/.ssh/demo_deploy

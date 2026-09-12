@@ -1,0 +1,16 @@
+__pycache__/
+.sites-runtime/
+.env
+.env.*
+!.env.example
+
+backups/
+.DS_Store
+*.pem
+*.key
+*.dump
+.venv/
+.pytest_cache/
+compose.release.json
+.deployed-revision
+releases/

@@ -1,0 +1,44 @@
+name: manufacturing-demo
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: manufacturing_lab
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:?Set DASHBOARD_PASSWORD}
+    volumes:
+      - demo_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./db/migrations/02-august.sql:/docker-entrypoint-initdb.d/02-august.sql:ro
+      - ./db/migrations/03-order-items.sql:/docker-entrypoint-initdb.d/03-order-items.sql:ro
+      - ./deploy/04-password.sh:/docker-entrypoint-initdb.d/04-password.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab -d manufacturing_lab"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+  dashboard:
+    build: .
+    environment:
+      DB_PASSWORD: ${DASHBOARD_PASSWORD:?Set DASHBOARD_PASSWORD}
+      DB_POOL_MIN_SIZE: ${DB_POOL_MIN_SIZE:-1}
+      DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-5}
+      DB_POOL_TIMEOUT: ${DB_POOL_TIMEOUT:-3}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+  web:
+    image: nginx:stable-alpine
+    ports:
+      - "${DEMO_BIND_ADDRESS:-0.0.0.0}:${DEMO_HTTP_PORT:-80}:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - dashboard
+    restart: unless-stopped
+volumes:
+  demo_data:

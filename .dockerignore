@@ -1,0 +1,9 @@
+__pycache__
+.git
+*.png
+db
+.sites-runtime
+.env
+.env.*
+backups
+*.dump
