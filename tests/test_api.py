@@ -55,7 +55,7 @@ class ApiTests(unittest.TestCase):
         data = self.client.get('/api/dashboard').json()
         self.assertEqual(data['as_of'], '2026-09-12')
         self.assertEqual(len(data['orders']), 12)
-        self.assertEqual(sum(row['amount'] for row in data['shipments']), 113000)
+        self.assertEqual(sum(row['amount'] for row in data['shipments']), 161000)
 
     def test_claims_dates_links_and_totals(self) -> None:
         data = self.client.get('/api/dashboard').json()
@@ -74,6 +74,27 @@ class ApiTests(unittest.TestCase):
             self.assertFalse(conn.execute("SELECT has_table_privilege(current_user, 'claims', 'UPDATE') AS allowed").fetchone()['allowed'])
             invalid = conn.execute("SELECT count(*) AS n FROM claims c JOIN order_items i USING (order_item_id) WHERE c.quantity > (SELECT COALESCE(sum(s.quantity),0) FROM shipments s WHERE s.order_item_id=i.order_item_id AND s.shipped_at<=c.opened_at)").fetchone()['n']
             self.assertEqual(invalid, 0)
+
+    def test_returned_order_is_fully_shipped_on_time(self) -> None:
+        for day in (6, 9, 12, 30):
+            data = self.client.get('/api/dashboard', params={'date': f'2026-09-{day:02}'}).json()
+            order = next(o for o in data['orders'] if o['order_id'] == 102)
+            self.assertEqual(order['quantity'], 4)
+            self.assertEqual(order['shipped_qty'], 4)
+            self.assertEqual(order['remaining_qty'], 0)
+            self.assertEqual(order['shipped_amount'], 66000)
+            self.assertEqual(order['fulfillment_status'], 'shipped')
+            self.assertEqual(order['days_overdue'], 0)
+            self.assertEqual(order['last_shipped_at'], '2026-09-06')
+            self.assertEqual(order['delay_reason'], '')
+            self.assertTrue(all(i['shipped_qty'] == i['quantity'] for i in order['items']))
+            self.assertEqual(sum(s['amount'] for s in data['shipments']), sum(t['shipped'] for t in data['trend']))
+            claim = [c for c in data['claims'] if c['order_id'] == 102]
+            if day >= 9:
+                self.assertEqual(claim[0]['claim_status'], 'returned')
+                self.assertEqual(claim[0]['quantity'], 1)
+            else:
+                self.assertEqual(claim, [])
 
     def test_pool_reuse_and_rollback(self) -> None:
         pool = app.state.pool

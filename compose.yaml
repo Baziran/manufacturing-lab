@@ -15,6 +15,7 @@ services:
       - ./db/migrations/02-august.sql:/docker-entrypoint-initdb.d/02-august.sql:ro
       - ./db/migrations/03-order-items.sql:/docker-entrypoint-initdb.d/03-order-items.sql:ro
       - ./db/migrations/05-claims.sql:/docker-entrypoint-initdb.d/05-claims.sql:ro
+      - ./db/migrations/06-return-scenario.sql:/docker-entrypoint-initdb.d/06-return-scenario.sql:ro
       - ./deploy/04-password.sh:/docker-entrypoint-initdb.d/04-password.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U lab -d manufacturing_lab"]

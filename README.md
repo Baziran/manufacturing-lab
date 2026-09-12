@@ -75,3 +75,5 @@ docker compose start
 docker compose exec -T db psql -U lab -d manufacturing_lab -v ON_ERROR_STOP=1 < db/migrations/05-claims.sql
 docker compose up -d --build dashboard
 ```
+
+Исправление учебного сценария №102: `db/migrations/06-return-scenario.sql`. Заказ полностью отгружен 6 сентября (срок — 7 сентября), рекламация открыта 7 сентября, один прибор возвращён 9 сентября. Для существующей БД примените скрипт через `psql -v ON_ERROR_STOP=1`, аналогично предыдущей миграции.
