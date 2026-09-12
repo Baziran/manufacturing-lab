@@ -392,7 +392,7 @@ tfoot th,tfoot td{border-top:2px solid var(--line);font-weight:650;background:#f
 [data-sidebar=collapsed] .sidebar nav .nav-symbol{width:30px;height:32px;flex-basis:30px}
 [data-sidebar=collapsed] .sidebar nav .nav-symbol svg{width:30px;height:30px}
 
-/* User-supplied thermal logo, sized for the full sidebar and icon rail. */
+/* Reference-inspired thermal logo, sized for the full sidebar and icon rail. */
 .sidebar .brand-mark{padding:0;flex-shrink:0;line-height:1;background:transparent;color:inherit}
 .sidebar .brand-mark svg{display:block;width:40px;height:40px}
 @media(max-width:950px){.sidebar .brand-mark svg{width:33px;height:33px}}
