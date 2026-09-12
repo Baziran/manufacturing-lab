@@ -337,3 +337,15 @@ tfoot th,tfoot td{border-top:2px solid var(--line);font-weight:650;background:#f
 .claim-cause-legend{flex:1;min-width:0;display:grid;gap:5px}.claim-cause-legend a{display:grid;grid-template-columns:8px minmax(0,1fr) 24px 40px;gap:8px;align-items:center;text-decoration:none;font-size:13px;padding:4px 0}.claim-cause-legend i{width:8px;height:8px}.claim-cause-legend strong,.claim-cause-legend small{text-align:end;font-variant-numeric:tabular-nums}.claim-cause-legend small{color:var(--muted)}.claim-cause-panel .note{margin-top:5px}
 @media(max-width:750px){.claims-overview{grid-template-columns:minmax(0,1fr);gap:12px}.claim-cause-panel{border-inline-start:0;border-top:1px solid var(--line);padding-inline-start:0;padding-top:12px}}
 @media(max-width:430px){.claim-cause-chart{flex-direction:column;align-items:stretch}.claim-donut{align-self:center}.claim-cause-legend{width:100%}}
+
+/* Compact toolbar and chart heading. */
+.topbar-actions .settings-button,.topbar-actions .demo-label{min-height:0;padding:5px 8px;font-size:12px;line-height:18px}
+.topbar-actions .settings-button{gap:5px;background:transparent}.topbar-actions .settings-button>span:first-child{font-size:14px;line-height:18px}
+.toolbar .comparison-control{align-self:flex-end;min-height:42px;margin:0;max-width:none;white-space:nowrap}
+.sales-chart .chart-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:15px;margin-bottom:5px}
+.sales-chart .chart-heading-copy{min-width:0}.sales-chart .chart-heading-copy p{margin:3px 0 5px}.sales-chart .chart-heading-copy .legend{margin-top:5px}
+.sales-chart .chart-heading .chart-summary{display:flex;gap:24px;margin:0;justify-content:flex-end;text-align:end}
+.sales-chart .chart-heading .chart-summary>div{flex:0 1 auto;min-width:120px}
+.sales-chart .chart-heading .chart-summary strong{font-size:22px;white-space:nowrap}
+.sales-chart .chart-heading .chart-summary small{margin:3px 0;font-size:12px}
+@media(max-width:650px){.sales-chart .chart-heading{grid-template-columns:minmax(0,1fr)}.sales-chart .chart-heading .chart-summary{justify-content:flex-start;gap:20px;text-align:start}.toolbar .comparison-control{white-space:normal}}
