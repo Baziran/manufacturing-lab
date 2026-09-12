@@ -314,15 +314,6 @@ tfoot th,tfoot td{border-top:2px solid var(--line);font-weight:650;background:#f
 
 .empty-icon svg{width:28px;height:28px}
 
-/* Customer quality: compact summary with links into the claims register. */
-.claims-panel{margin-top:5px}.claims-stats,.claims-reasons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
-.claims-stats a,.claims-reasons a{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:8px;border:1px solid var(--line);text-decoration:none}
-.claims-stats strong{font-size:24px;font-variant-numeric:tabular-nums}.claims-stats span,.claims-reasons span{font-size:13px}.claims-reasons{margin-top:5px}.claims-reasons strong{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--blue)}
-.claims-stats a:hover,.claims-reasons a:hover{border-color:var(--blue)}
-[data-density=dense] .claims-stats a,[data-density=dense] .claims-reasons a{padding:5px}
-@media(max-width:950px){.claims-stats,.claims-reasons{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:500px){.claims-reasons{grid-template-columns:minmax(0,1fr)}}
-
 .drill-view{grid-template-columns:minmax(0,1fr)}.drill-view>div{min-width:0}
 
 .order-time{margin-top:12px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -334,3 +325,15 @@ tfoot th,tfoot td{border-top:2px solid var(--line);font-weight:650;background:#f
 .order-time.cancelled{padding-top:5px;border-top:1px solid var(--line)}
 
 .fulfillment-label{font-size:12px;color:var(--muted);margin:5px 0}.detail-reason>strong,.detail-reason>span{display:block}.detail-reason>strong{font-size:12px;margin-bottom:5px}.order-claims-panel{max-width:100%;min-width:0}.order-dossier{min-width:0}
+
+/* Claims: lifecycle on the left, reported causes on the right. */
+.claims-panel{margin-top:5px}.claims-overview{display:grid;grid-template-columns:minmax(210px,.75fr) minmax(0,1.5fr);gap:20px;align-items:start}
+.claim-status-list{display:grid;gap:0}.claim-stat{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:33px;padding:5px 0;text-decoration:none;font-size:14px}
+.claim-stat strong{font-variant-numeric:tabular-nums;font-weight:650}.claim-total{border-bottom:1px solid var(--line);margin-bottom:5px;font-weight:650}.claim-total strong{font-size:22px}
+.claim-open-children{margin-inline-start:12px;padding-inline-start:14px;border-inline-start:2px solid var(--line)}.claim-open-children .claim-stat{font-size:13px;color:var(--muted);min-height:28px}
+.claim-closed{border-top:1px solid var(--line);margin-top:5px}.claim-stat:hover span,.claim-cause-legend a:hover span{text-decoration:underline}
+.claim-cause-panel{border-inline-start:1px solid var(--line);padding-inline-start:20px;min-width:0}.claim-cause-panel h3{font-size:14px;font-weight:600;margin-bottom:5px}
+.claim-cause-chart{display:flex;align-items:center;gap:15px}.claim-donut{width:140px;height:140px;flex-shrink:0;direction:ltr}.claim-donut a:hover circle{opacity:.75}.claim-donut-total{font-size:26px;font-weight:650;fill:currentColor;font-variant-numeric:tabular-nums}.claim-donut-label{font-size:10px;fill:var(--muted)}
+.claim-cause-legend{flex:1;min-width:0;display:grid;gap:5px}.claim-cause-legend a{display:grid;grid-template-columns:8px minmax(0,1fr) 24px 40px;gap:8px;align-items:center;text-decoration:none;font-size:13px;padding:4px 0}.claim-cause-legend i{width:8px;height:8px}.claim-cause-legend strong,.claim-cause-legend small{text-align:end;font-variant-numeric:tabular-nums}.claim-cause-legend small{color:var(--muted)}.claim-cause-panel .note{margin-top:5px}
+@media(max-width:750px){.claims-overview{grid-template-columns:minmax(0,1fr);gap:12px}.claim-cause-panel{border-inline-start:0;border-top:1px solid var(--line);padding-inline-start:0;padding-top:12px}}
+@media(max-width:430px){.claim-cause-chart{flex-direction:column;align-items:stretch}.claim-donut{align-self:center}.claim-cause-legend{width:100%}}

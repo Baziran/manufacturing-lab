@@ -2,6 +2,15 @@
 // Russian source strings are stable translation keys. Parameterized entries
 // translate whole messages, preserving numbers and database identifiers.
 const translationRows = [
+["Открытые", "Open", "פתוחות"],
+["Закрытые", "Closed", "סגורות"],
+["Товар получен", "Goods received", "הסחורה התקבלה"],
+["Товар не получен", "Goods not received", "הסחורה טרם התקבלה"],
+["Открытые · товар получен", "Open · goods received", "פתוחות · הסחורה התקבלה"],
+["Открытые · товар не получен", "Open · goods not received", "פתוחות · הסחורה טרם התקבלה"],
+["Заявленные причины брака", "Reported defect reasons", "סיבות הפגם שדווחו"],
+["обращений", "claims", "פניות"],
+["По всем обращениям, включая закрытые", "All claims, including closed claims", "כל הפניות, כולל פניות שנסגרו"],
 ["Исполнение исходного заказа", "Original order fulfillment", "ביצוע ההזמנה המקורית"],
 ["Причина задержки оставшейся отгрузки", "Reason for delay of remaining shipment", "סיבת העיכוב במשלוח הנותר"],
 ["Рекламации по заказу", "Claims for order", "תלונות להזמנה"],

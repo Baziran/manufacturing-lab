@@ -14,7 +14,7 @@ run(`data={as_of:'2026-09-12',claims:[
  {claim_id:4,order_id:103,customer:'Customer',product:'Product',sku:'SKU',manager:'Анна',opened_at:'2026-09-11',reason:'spec_mismatch',quantity:1,goods_value:6000,claim_status:'returned',returned_at:'2026-09-12',closed_at:null,resolution:null},
  {claim_id:5,order_id:105,customer:'Customer',product:'Product',sku:'SKU',manager:'Анна',opened_at:'2026-09-12',reason:'transit_damage',quantity:1,goods_value:4500,claim_status:'review',returned_at:null,closed_at:null,resolution:null}
 ]};page='sales';`);
-for(const [key,count] of Object.entries({claims:5,'claims-open':3,'claims-returned':3,'claims-closed':2,'claim-transit_damage':2,'claim-incomplete':1,'claim-power_on_failure':1,'claim-spec_mismatch':1})){
+for(const [key,count] of Object.entries({claims:5,'claims-open':3,'claims-open-received':2,'claims-open-unreceived':1,'claims-returned':3,'claims-closed':2,'claim-transit_damage':2,'claim-incomplete':1,'claim-power_on_failure':1,'claim-spec_mismatch':1})){
  assert(run(`isList('sales','${key}')`));assert.equal(run(`getList('${key}').rows.length`),count);
  const html=run(`renderList('${key}')`);assert.equal((html.match(/data-order=/g)||[]).length,count);
  assert(!html.includes('undefined'));
@@ -28,6 +28,10 @@ for(const lang of ['ru','en','he']){
   assert(!/[А-Яа-яЁё]/.test(translated),lang+' claims translation');
  }
 }
+assert.equal(run("getList('claims-open-received').rows.length+getList('claims-open-unreceived').rows.length"),run("getList('claims-open').rows.length"));
+assert(run('claimsPanel()').includes('claim-open-children'));
+assert.equal((run('claimsPanel()').match(/pathLength="100"/g)||[]).length,4);
+assert(run('claimsPanel()').includes('40%'));
 const detail={order_id:102,status:'active',remaining_qty:3,quantity:4,order_date:'2026-09-02',due_date:'2026-09-07',original_due_date:'2026-09-07',fulfillment_status:'overdue',last_shipped_at:'2026-09-06',delay_reason:'Нет комплектующих'};
 ctx.detail=detail;run("settings.language='ru'");
 assert(run('orderClaimsPanel(detail)').includes('Возврат принят'));
