@@ -7,5 +7,5 @@ SELECT o.order_id,i.order_item_id,b.component_id,b.quantity AS per_unit,
  CASE WHEN o.status='active' THEN GREATEST(i.quantity-COALESCE(s.qty,0),0)*b.quantity ELSE 0 END AS open_needed
 FROM orders o JOIN order_items i USING(order_id) JOIN bom b USING(product_id)
 LEFT JOIN shipped s USING(order_item_id)
-WHERE o.order_date>=date_trunc('month',%(as_of)s::date) AND o.order_date<=%(as_of)s
+WHERE o.order_date<=%(as_of)s
 ORDER BY o.order_id,b.component_id,i.line_no;

@@ -30,5 +30,5 @@ SELECT o.*,c.name AS customer,c.manager,t.item_count,t.quantity,t.amount,t.produ
  CASE WHEN o.status='active' AND o.due_date<%(as_of)s AND t.remaining_qty>0
  THEN %(as_of)s::date-o.due_date ELSE 0 END AS days_overdue
 FROM orders o JOIN customers c USING(customer_id) JOIN totals t USING(order_id) LEFT JOIN paid pay USING(order_id)
-WHERE o.order_date>=date_trunc('month',%(as_of)s::date) AND o.order_date<=%(as_of)s
+WHERE o.order_date>=%(period_start)s::date AND o.order_date<=%(as_of)s
 ORDER BY o.due_date,o.order_id;

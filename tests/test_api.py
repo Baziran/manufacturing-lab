@@ -34,13 +34,13 @@ class ApiTests(unittest.TestCase):
         self.assertIn('/api/dashboard', schema['paths'])
         parameter = schema['paths']['/api/dashboard']['get']['parameters'][0]
         self.assertEqual(parameter['name'], 'date')
-        self.assertEqual(parameter['schema']['format'], 'date')
+        self.assertEqual(parameter['schema']['anyOf'][0]['format'], 'date')
         self.assertEqual(self.client.get('/api/unknown').status_code, 404)
         queries = self.client.get('/api/queries').json()
         self.assertEqual(len(queries), 9)
 
     def test_validation_and_serialization(self) -> None:
-        for value in ('invalid', '', '2026-08-31', '2026-10-01', '2026-09-31'):
+        for value in ('invalid', '', '1999-12-31', '2100-01-01', '2026-09-31'):
             response = self.client.get('/api/dashboard', params={'date': value})
             self.assertEqual(response.status_code, 400, value)
             self.assertIn('error', response.json())
@@ -95,6 +95,47 @@ class ApiTests(unittest.TestCase):
                 self.assertEqual(claim[0]['quantity'], 1)
             else:
                 self.assertEqual(claim, [])
+
+    def test_months_ranges_and_related_orders(self) -> None:
+        def report(**params):
+            response = self.client.get('/api/dashboard', params=params)
+            self.assertEqual(response.status_code, 200, response.text)
+            return response.json()
+
+        september = report(month='2026-09')
+        august = report(month='2026-08')
+        self.assertEqual(september['period_start'], '2026-09-01')
+        self.assertEqual(september['as_of'], '2026-09-30')
+        self.assertEqual(len(september['trend']), 30)
+        self.assertEqual(len(september['previous_trend']), 31)
+        self.assertEqual(september['previous_trend'], august['trend'])
+        for month, days, previous_end in [('2024-02', 29, '2024-01-31'), ('2027-01', 31, '2026-12-31'), ('2026-02', 28, '2026-01-31')]:
+            empty = report(month=month)
+            self.assertEqual(len(empty['trend']), days)
+            self.assertEqual(empty['previous_as_of'], previous_end)
+            self.assertEqual(empty['orders'], [])
+            self.assertEqual(sum(r['booked'] for r in empty['trend']), 0)
+        combined = report(date_from='2026-08-01', date_to='2026-09-30')
+        for key, field in [('orders', 'order_date'), ('shipments', 'shipped_at'), ('payments', 'paid_at'), ('claims', 'opened_at')]:
+            self.assertEqual(len(combined[key]), len(august[key]) + len(september[key]), key)
+            self.assertTrue(all('2026-08-01' <= r[field] <= '2026-09-30' for r in combined[key]))
+        day = report(date_from='2026-09-06', date_to='2026-09-06')
+        self.assertTrue(all(r['shipped_at'] == '2026-09-06' for r in day['shipments']))
+        self.assertTrue(all(r['order_date'] == '2026-09-06' for r in day['orders']))
+        related = next(o for o in day['related_orders'] if o['order_id'] == 102)
+        self.assertEqual(related['fulfillment_status'], 'shipped')
+        self.assertTrue(any(r['order_id'] == 102 for r in day['order_bom']))
+        self.assertEqual(sum(r['amount'] for r in day['shipments']), sum(r['shipped'] for r in day['trend']))
+        claim_day = report(date_from='2026-09-07', date_to='2026-09-07')
+        claim = next(c for c in claim_day['claims'] if c['order_id'] == 102)
+        self.assertIsNone(claim['returned_at'])  # September 9 is not yet visible.
+        for params in [dict(month='2026-13'), dict(month='2026-9'), dict(month=''),
+                       dict(date_from='2026-09-12'), dict(date_to='2026-09-12'),
+                       dict(date_from='2026-09-12', date_to='2026-09-01'),
+                       dict(date_from='2025-01-01', date_to='2026-09-01'),
+                       dict(month='2026-09', date='2026-09-12'),
+                       dict(month='2026-09', date_from='2026-09-01', date_to='2026-09-02')]:
+            self.assertEqual(self.client.get('/api/dashboard', params=params).status_code, 400, params)
 
     def test_pool_reuse_and_rollback(self) -> None:
         pool = app.state.pool

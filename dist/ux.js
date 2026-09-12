@@ -11,7 +11,7 @@ function trendIndicator(current,previous,goodDirection='up'){
  const direction=delta>0?'up':delta<0?'down':'flat';
  const good=goodDirection==='neutral'||direction==='flat'?'neutral':direction===goodDirection?'ahead':'behind';
  const value=new Intl.NumberFormat(locales[settings.language],{maximumFractionDigits:1}).format(Math.abs(delta));
- return `<span class="trend-change ${good}"><span aria-hidden="true">${delta>0?'▲':delta<0?'▼':'＝'}</span> <span>${value}%</span><span class="sr-only"> · ${tr(delta>0?'Рост':delta<0?'Снижение':'Без изменений')}</span><span class="trend-context"> ${tr('к августу')}</span></span>`;
+ return `<span class="trend-change ${good}"><span aria-hidden="true">${delta>0?'▲':delta<0?'▼':'＝'}</span> <span>${value}%</span><span class="sr-only"> · ${tr(delta>0?'Рост':delta<0?'Снижение':'Без изменений')}</span><span class="trend-context"> ${tr('к предыдущему месяцу')}</span></span>`;
 }
 function csvCell(value){
  let text=String(value??'');
@@ -31,7 +31,7 @@ function downloadTable(table,title){
  }));
  const url=URL.createObjectURL(new Blob([makeCSV(rows)],{type:'text/csv;charset=utf-8;'}));
  const link=document.createElement('a');link.href=url;
- link.download=`${title.replace(/[^\p{L}\p{N}_-]+/gu,'-')}-${page==='health'?'live':data?.as_of||'data'}.csv`;
+ link.download=`${title.replace(/[^\p{L}\p{N}_-]+/gu,'-')}-${page==='health'?'live':(data?.period_start?data.period_start+'_'+data.as_of:data?.as_of)||'data'}.csv`;
  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function enhanceTables(){

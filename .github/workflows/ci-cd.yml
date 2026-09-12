@@ -43,6 +43,7 @@ jobs:
           node tests/test_ux.cjs
           node tests/test_claims.cjs
           node tests/test_order_time.cjs
+          node tests/test_periods.cjs
           sh -n deploy/*.sh
       - name: Build and smoke-test application container
         run: |

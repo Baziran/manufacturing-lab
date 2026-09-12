@@ -1,6 +1,6 @@
 -- Независимые суммы по дням: денежный оборот позиций, отгрузок и платежей.
 WITH days AS (
- SELECT generate_series(date_trunc('month',%(as_of)s::date),%(as_of)s::date,'1 day')::date AS day
+ SELECT generate_series(%(period_start)s::date,%(as_of)s::date,'1 day')::date AS day
 ), bookings AS (
  SELECT o.order_date AS day,SUM(i.quantity*i.unit_price) AS booked
  FROM orders o JOIN order_items i USING(order_id) WHERE o.status='active' GROUP BY o.order_date

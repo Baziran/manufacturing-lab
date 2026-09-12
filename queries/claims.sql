@@ -1,4 +1,4 @@
--- Claims opened this month, with only events known by the report date.
+-- Claims opened in the inclusive period, with events known by its end.
 SELECT c.claim_id, i.order_id, i.order_item_id, p.sku, p.name AS product,
        cu.name AS customer, cu.manager, c.opened_at, c.reason, c.quantity,
        c.quantity * i.unit_price AS goods_value,
@@ -13,6 +13,6 @@ JOIN order_items i USING (order_item_id)
 JOIN orders o USING (order_id)
 JOIN customers cu USING (customer_id)
 JOIN products p USING (product_id)
-WHERE c.opened_at >= date_trunc('month', %(as_of)s::date)::date
+WHERE c.opened_at >= %(period_start)s::date
   AND c.opened_at <= %(as_of)s::date
 ORDER BY c.opened_at DESC, c.claim_id DESC;

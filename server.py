@@ -24,7 +24,7 @@ QUERIES: dict[str, str] = {
     name: (ROOT / 'queries' / f'{name}.sql').read_text()
     for name in ('orders', 'trend', 'supply', 'shipments', 'payments', 'order_bom', 'claims')
 }
-INVALID_DATE = 'Выберите корректную дату: сентябрь 2026 года.'
+INVALID_DATE = 'Проверьте период: начальная дата не позже конечной, не более 366 дней.'
 
 
 @asynccontextmanager
@@ -70,21 +70,44 @@ def queries() -> JSONResponse:
 
 @app.get('/api/dashboard', tags=['Analytics'], responses={400: {'description': 'Invalid report date'},
                                                         503: {'description': 'Database unavailable'}})
-def dashboard(request: Request, as_of: Annotated[date, Query(
-        alias='date', ge=date(2026, 9, 1), le=date(2026, 9, 30),
-        description='Report date, inclusive; the dataset covers September 2026.')]
-        = date(2026, 9, 12)) -> JSONResponse:
-    """Sales, orders and supply from one consistent snapshot, with August comparison."""
+def dashboard(request: Request,
+              as_of: Annotated[date | None, Query(alias='date', description='Legacy inclusive snapshot date.')] = None,
+              month: Annotated[str | None, Query(pattern=r'^20[0-9]{2}-(0[1-9]|1[0-2])$', description='Full calendar month, YYYY-MM.')] = None,
+              date_from: Annotated[date | None, Query(description='Journal start, inclusive.')] = None,
+              date_to: Annotated[date | None, Query(description='Journal end, inclusive.')] = None) -> JSONResponse:
+    """Calendar-month dashboard or inclusive journal range; statuses at period end."""
+    if ((date_from is None) != (date_to is None)
+            or (month is not None and (as_of is not None or date_from is not None))
+            or (as_of is not None and date_from is not None)):
+        return json_response({'error': INVALID_DATE}, 400)
+    if month:
+        start = date.fromisoformat(month + '-01')
+        as_of = (start.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+    elif date_from is not None:
+        start, as_of = date_from, date_to
+    else:
+        as_of = as_of or date(2026, 9, 12)
+        start = as_of.replace(day=1)
+    if not (date(2000, 1, 1) <= start <= as_of <= date(2099, 12, 31)) or (as_of - start).days > 365:
+        return json_response({'error': INVALID_DATE}, 400)
+    previous_end = start.replace(day=1) - timedelta(days=1)
+    previous_as_of = previous_end if month or date_from else previous_end.replace(day=min(as_of.day, previous_end.day))
+    params = {'period_start': start, 'as_of': as_of}
     try:
         with request.app.state.pool.connection() as conn:
             conn.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY')
             conn.execute("SET LOCAL statement_timeout = '5s'")
-            data: dict[str, Any] = {name: conn.execute(sql, {'as_of': as_of}).fetchall()
+            data: dict[str, Any] = {name: conn.execute(sql, params).fetchall()
                                     for name, sql in QUERIES.items()}
-            previous_end = as_of.replace(day=1) - timedelta(days=1)
-            previous_as_of = previous_end.replace(day=min(as_of.day, previous_end.day))
-            data['previous_trend'] = conn.execute(QUERIES['trend'], {'as_of': previous_as_of}).fetchall()
-        data.update(as_of=as_of, fetched_at=datetime.now(timezone.utc), monthly_plan=240000,
+            data['previous_trend'] = conn.execute(QUERIES['trend'], {
+                'period_start': previous_end.replace(day=1), 'as_of': previous_as_of}).fetchall()
+            # Journal documents may belong to an order created before the chosen range.
+            related_ids = {r['order_id'] for name in ('shipments', 'payments', 'claims') for r in data[name]}
+            related_ids.update(o['order_id'] for c in data['supply'] for o in c['orders'])
+            all_orders = conn.execute(QUERIES['orders'], {'period_start': date(2000, 1, 1), 'as_of': as_of}).fetchall()
+            data['related_orders'] = [o for o in all_orders if o['order_id'] in related_ids]
+            data['detail_claims'] = conn.execute(QUERIES['claims'], {'period_start': date(2000, 1, 1), 'as_of': as_of}).fetchall()
+        data.update(as_of=as_of, period_start=start, period_end=as_of, report_month=start.strftime('%Y-%m'), fetched_at=datetime.now(timezone.utc), monthly_plan=240000,
                     previous_as_of=previous_as_of, previous_monthly_plan=240000,
                     source='PostgreSQL', inventory_snapshot='2026-09-12')
         return json_response(data)
