@@ -355,3 +355,11 @@ tfoot th,tfoot td{border-top:2px solid var(--line);font-weight:650;background:#f
 .toolbar{flex-wrap:wrap;justify-content:flex-end}.toolbar input[type=month]{min-height:42px;max-width:210px;padding:8px;border:1px solid var(--line);background:var(--surface,#fff);color:inherit;font:inherit}
 .toolbar input[type=date]{min-width:140px}.journal-period .date-label{font-size:11px}
 @media(max-width:650px){.journal-period{flex-wrap:wrap}.toolbar{max-width:100%}}
+
+/* A shared day tooltip separates overlapping current and historical series. */
+.sales-chart .chart{outline-offset:3px}.chart-hit-area{cursor:crosshair}.chart-hover-layer{pointer-events:none}
+.chart-tooltip{position:fixed;z-index:1000;pointer-events:none;width:280px;max-width:calc(100vw - 16px);padding:12px;background:var(--chart-panel,#fff);color:#172a3b;border:1px solid var(--line);box-shadow:0 8px 28px #10293826;border-radius:8px;font-size:12px;font-variant-numeric:tabular-nums;line-height:1.4;text-align:start}
+.chart-tooltip[hidden]{display:none}.chart-tip-title{font-size:14px;display:block}.chart-tooltip small{display:block;color:var(--muted);margin:2px 0 5px}.chart-tip-section{border-top:1px solid var(--line);margin-top:8px;padding-top:7px}.chart-tip-section h4{display:flex;align-items:center;gap:6px;font-size:12px;margin:0 0 3px}.chart-tip-section p{color:var(--muted);margin:5px 0}.chart-tip-row{display:flex;justify-content:space-between;gap:15px;margin:4px 0}.chart-tip-row>span{display:flex;align-items:center;gap:6px}.chart-tip-row strong{white-space:nowrap}.chart-tip-row i{display:inline-block;width:7px;height:7px;background:var(--blue)}.chart-tip-row i.shipped{background:var(--orange)}.series-sample{display:inline-block;width:15px;border-top:2px solid currentColor}.historical .series-sample{border-top-style:dashed}.historical .chart-tip-row i{background:transparent;border:1px dashed var(--blue)}.historical .chart-tip-row i.shipped{border-color:var(--orange)}
+[data-theme="flat"] .chart-tooltip,[data-theme="flat-israel"] .chart-tooltip{border-radius:0;padding:8px}
+
+[data-theme=dark]{--chart-panel:#1c2b3b}[data-theme=dark] .chart-tooltip{color:#e1eaf2}.chart:focus-visible{outline:2px solid var(--blue)}

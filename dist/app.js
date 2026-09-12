@@ -52,7 +52,7 @@ function cumulativeChart(rows,w=900,h=120){
  const line=(key,color,ghost=false)=>`<path class="${ghost?'ghost-line':'current-line'}" d="${path(key)}" fill="none" stroke="${color}" stroke-width="${ghost?2:3}" ${ghost?'stroke-dasharray="7 6" opacity=".5"':''} stroke-linejoin="round"/>`;
  const dots=points.map((v,i)=>[['a','Заказы','var(--blue)',false],['b','Отгрузки','var(--orange)',false],['pa','Заказы','var(--blue)',true],['pb','Отгрузки','var(--orange)',true]].map(([key,label,color,ghost])=>v[key]===null?'':`<circle cx="${x(i)}" cy="${y(v[key])}" r="3" fill="${color}" opacity="${ghost ? 0.5 : 1}"><title>${d(ghost?v.previousDay:v.day)} · ${tr(label)}: ${n(v[key])} ₪</title></circle>`).join('')).join('');
  const todayMarker=todayIndex===null?'':`<g class="today-marker"><line x1="${x(todayIndex)}" x2="${x(todayIndex)}" y1="${p.t}" y2="${h-p.b}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="1 3" stroke-linecap="round"/><text x="${x(todayIndex)}" y="${p.t-7}" text-anchor="middle">${esc(tr('Сегодня'))} · ${Number(data.today.slice(-2))}</text><title>${esc(tr('Сегодня'))}: ${d(data.today)}</title></g>`;
- return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Заказы и отгрузки по дням месяца">${grid}${settings.ghostComparison?line('pa','var(--blue)',true)+line('pb','var(--orange)',true):''}${line('a','var(--blue)')}${line('b','var(--orange)')}${dots}${ticks}${todayMarker}</svg>`;
+ return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="group" tabindex="0" aria-label="Заказы и отгрузки по дням месяца" aria-describedby="chart-hover-tooltip" data-points="${esc(JSON.stringify(points))}" data-max="${max}" data-calendar-days="${calendarDays}">${grid}${settings.ghostComparison?line('pa','var(--blue)',true)+line('pb','var(--orange)',true):''}${line('a','var(--blue)')}${line('b','var(--orange)')}${dots}${ticks}${todayMarker}<g class="chart-hover-layer" aria-hidden="true"></g><rect class="chart-hit-area" x="${p.l}" y="${p.t}" width="${w-p.l-p.r}" height="${h-p.t-p.b}" fill="transparent"/></svg>`;
 }
 function sales(){
  const rows=monthRows(),booked=sum(rows,'amount'),shipped=sum(data.shipments,'amount'),paid=sum(data.payments,'amount');
@@ -232,17 +232,71 @@ function renderBreadcrumb(){
  if(selected!==null){const record=data?selectedRecord():null;links.push({label:record?(selectedKind==='order'?'№ '+record.order_id:record.sku):String(selected),href:location.hash});}
  $('#crumb').innerHTML=links.map((link,i)=>`${i?'<span class="crumb-separator" aria-hidden="true">/</span>':''}<a href="${esc(link.href)}" ${i===links.length-1?'aria-current="page"':''}>${esc(link.label)}</a>`).join('');
 }
+function chartDayTooltip(point,index,calendarDays){
+ const row=(label,value,klass)=>`<div class="chart-tip-row"><span><i class="${klass}"></i>${esc(tr(label))}</span><strong>${n(value)} ₪</strong></div>`;
+ const section=(historical)=>{
+  const date=historical?point.previousDay:point.day;
+  const month=historical?(data.previous_month||data.previous_as_of.slice(0,7)):(data.report_month||data.as_of.slice(0,7));
+  const a=historical?point.pa:point.a,b=historical?point.pb:point.b;
+  const unavailable=!historical&&index>=calendarDays?'В этом месяце нет такого дня':'Нет фактических данных';
+  return `<section class="chart-tip-section ${historical?'historical':'actual'}"><h4><span class="series-sample"></span>${esc(tr(historical?'Прошлый месяц':'Выбранный месяц'))} · ${esc(monthName(month+'-01'))}</h4>${date?`<small>${d(date)}</small>${row('Заказано',a,'booked')}${row('Отгружено',b,'shipped')}`:`<p>${esc(tr(unavailable))}</p>`}</section>`;
+ };
+ return `<strong class="chart-tip-title">${esc(tr('День'))} ${index+1}</strong><small>${esc(tr('Накопленным итогом с начала месяца'))}</small>${section(false)}${settings.ghostComparison?section(true):''}`;
+}
+let chartHoverController=null;
+function bindChartHover(panel){
+ chartHoverController?.abort();chartHoverController=new AbortController();
+ const svg=panel.querySelector('.chart');if(!svg)return;
+ let tooltip=panel.querySelector('.chart-tooltip');
+ if(!tooltip){tooltip=document.createElement('div');tooltip.className='chart-tooltip';tooltip.id='chart-hover-tooltip';tooltip.setAttribute('role','tooltip');panel.appendChild(tooltip);}
+ tooltip.hidden=true;
+ const points=JSON.parse(svg.dataset.points),max=Number(svg.dataset.max),calendarDays=Number(svg.dataset.calendarDays);
+ const {width:w,height:h}=svg.viewBox.baseVal,p={l:55,r:18,t:20,b:32};
+ let activeIndex=-1;
+ const x=i=>p.l+i*(w-p.l-p.r)/Math.max(points.length-1,1),y=v=>h-p.b-v/max*(h-p.t-p.b);
+ const hide=()=>{tooltip.hidden=true;svg.querySelector('.chart-hover-layer').innerHTML='';activeIndex=-1;};
+ const show=(index,clientX,clientY)=>{
+  const v=points[index];if(!v)return;
+  activeIndex=index;const cx=x(index),step=(w-p.l-p.r)/Math.max(points.length-1,1);
+  const left=Math.max(p.l,cx-step/2),right=Math.min(w-p.r,cx+step/2);
+  const markers=[['a','var(--blue)',false],['b','var(--orange)',false],['pa','var(--blue)',true],['pb','var(--orange)',true]].map(([key,color,historical])=>v[key]===null||historical&&!settings.ghostComparison?'':historical?`<rect x="${cx-5}" y="${y(v[key])-5}" width="10" height="10" fill="var(--chart-panel,#fff)" stroke="${color}" stroke-width="2" stroke-dasharray="2 2"/>`:`<circle cx="${cx}" cy="${y(v[key])}" r="4" fill="${color}" stroke="var(--chart-panel,#fff)" stroke-width="2"/>`).join('');
+  svg.querySelector('.chart-hover-layer').innerHTML=`<rect x="${left}" y="${p.t}" width="${right-left}" height="${h-p.t-p.b}" fill="var(--blue)" opacity=".07"/><line x1="${cx}" x2="${cx}" y1="${p.t}" y2="${h-p.b}" stroke="var(--muted)" stroke-width="1"/>${markers}`;
+  tooltip.innerHTML=chartDayTooltip(v,index,calendarDays);tooltip.hidden=false;
+  const bounds=tooltip.getBoundingClientRect(),margin=8;
+  const tx=clientX+bounds.width+16<window.innerWidth?clientX+16:clientX-bounds.width-16;
+  const ty=clientY+bounds.height+16<window.innerHeight?clientY+16:clientY-bounds.height-16;
+  tooltip.style.left=Math.max(margin,Math.min(tx,window.innerWidth-bounds.width-margin))+'px';
+  tooltip.style.top=Math.max(margin,Math.min(ty,window.innerHeight-bounds.height-margin))+'px';
+ };
+ const pointer=e=>{
+  const rect=svg.getBoundingClientRect(),px=(e.clientX-rect.left)*w/rect.width,py=(e.clientY-rect.top)*h/rect.height;
+  if(px<p.l||px>w-p.r||py<p.t||py>h-p.b){hide();return;}
+  show(Math.max(0,Math.min(points.length-1,Math.round((px-p.l)/(w-p.l-p.r)*(points.length-1)))),e.clientX,e.clientY);
+ };
+ svg.addEventListener('pointermove',pointer);svg.addEventListener('pointerdown',pointer);
+ svg.addEventListener('pointerleave',hide);svg.addEventListener('blur',hide);
+ const keyboardShow=index=>{const rect=svg.getBoundingClientRect();show(index,rect.left+x(index)*rect.width/w,rect.top+p.t*rect.height/h);};
+ svg.addEventListener('focus',()=>{if(activeIndex<0)keyboardShow(Math.max(0,Math.min(points.length-1,Number(data.as_of.slice(-2))-1)));});
+ window.addEventListener('scroll',hide,{capture:true,passive:true,signal:chartHoverController.signal});
+ svg.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){hide();return;}
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+  e.preventDefault();keyboardShow(e.key==='Home'?0:e.key==='End'?points.length-1:Math.max(0,Math.min(points.length-1,(activeIndex<0?0:activeIndex)+(e.key==='ArrowRight'?1:-1))));
+ });
+}
 let chartObserver=null;
 function fitChart(){
- chartObserver?.disconnect();chartObserver=null;
+ chartObserver?.disconnect();chartObserver=null;chartHoverController?.abort();
  const panel=$('.sales-chart');
- if(!panel||typeof ResizeObserver==='undefined')return;
+ if(!panel)return;
+ bindChartHover(panel);
+ if(typeof ResizeObserver==='undefined')return;
  let previousSize='';
  chartObserver=new ResizeObserver(()=>{
   const chart=panel.querySelector('.chart');if(!chart)return;
   const w=Math.round(chart.getBoundingClientRect().width),h=Math.round(chart.getBoundingClientRect().height);
   if(w<100||h<60||previousSize===`${w}/${h}`)return;
-  previousSize=`${w}/${h}`;chart.outerHTML=cumulativeChart(data.trend,w,h);localize(panel);
+  previousSize=`${w}/${h}`;chart.outerHTML=cumulativeChart(data.trend,w,h);bindChartHover(panel);localize(panel);
  });
  chartObserver.observe(panel);
 }
