@@ -40,11 +40,12 @@ jobs:
           export DB_HOST=127.0.0.1 DB_PORT=55432 DB_PASSWORD="$DASHBOARD_PASSWORD"
           python -m unittest discover -s tests -v
           for file in dist/*.js; do node --check "$file"; done
+          node tests/test_ux.cjs
           sh -n deploy/*.sh
       - name: Build and smoke-test application container
         run: |
           docker compose up -d --build dashboard
-          curl --fail --retry 15 --retry-connrefused --retry-delay 2 http://127.0.0.1:8765/api/dashboard -o /tmp/dashboard.json
+          curl --fail --retry 15 --retry-all-errors --retry-connrefused --retry-delay 2 http://127.0.0.1:8765/api/dashboard -o /tmp/dashboard.json
           python -c 'import json; d=json.load(open("/tmp/dashboard.json")); assert len(d["orders"]) == 12'
           curl --fail http://127.0.0.1:8765/openapi.json -o /tmp/openapi.json
       - name: Clean up

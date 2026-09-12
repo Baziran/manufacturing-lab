@@ -2,6 +2,15 @@
 // Russian source strings are stable translation keys. Parameterized entries
 // translate whole messages, preserving numbers and database identifiers.
 const translationRows = [
+['Повторите обновление после восстановления связи.','Refresh again once the connection is restored.','רעננו שוב לאחר חידוש החיבור.'],
+['Загружаем данные…','Loading data…','טוען נתונים…'],
+['Скачать CSV для Excel','Download CSV for Excel','הורדת CSV עבור Excel'],
+['Попробуйте изменить дату или фильтр.','Try changing the date or filter.','נסו לשנות את התאריך או המסנן.'],
+['Нет отгрузок за выбранный период.','No shipments in the selected period.','אין משלוחים בתקופה שנבחרה.'],
+['Нет оплат за выбранный период.','No payments in the selected period.','אין תשלומים בתקופה שנבחרה.'],
+['Нет базы для сравнения','No comparison baseline','אין בסיס להשוואה'],
+['Рост','Increase','עלייה'],['Снижение','Decrease','ירידה'],['Без изменений','No change','ללא שינוי'],['к августу','vs August','לעומת אוגוסט'],
+
 ['Последовательные сканирования','Sequential scans','סריקות סדרתיות'],
 ['Индексные сканирования','Index scans','סריקות אינדקס'],
 ["Сервер и БД", "Server & database", "שרת ומסד נתונים"],

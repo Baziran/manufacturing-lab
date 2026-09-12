@@ -1,0 +1,44 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),path=require('path');
+const base=path.join(__dirname,'..');
+let blob,link,headerButtons=[];
+const document={documentElement:{dataset:{}},querySelectorAll:()=>[],body:{append(){}},createElement:()=>link={click(){this.clicked=true},remove(){}}};
+const ctx=vm.createContext({console,document,localStorage:{getItem:()=>null,setItem(){}},Intl,Date,WeakMap,Blob,
+ URL:{createObjectURL:b=>(blob=b,'blob:test'),revokeObjectURL(){}},setTimeout:fn=>fn(),page:'sales',listView:'shipments',data:{as_of:'2026-09-12'},esc:s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;')});
+vm.runInContext(fs.readFileSync(path.join(base,'dist/i18n.js'),'utf8'),ctx);
+vm.runInContext(fs.readFileSync(path.join(base,'dist/ux.js'),'utf8'),ctx);
+const run=s=>vm.runInContext(s,ctx);
+assert.equal(run(`csvCell('=SUM(A1:A2)')`),`"'=SUM(A1:A2)"`);
+assert.equal(run(`csvCell('  @malicious')`),`"'  @malicious"`);
+assert.equal(run(`csvCell('-250')`),'"-250"');
+assert.equal(run(`csvCell('quoted "name"; field')`),'"quoted ""name""; field"');
+assert.equal(run(`exportNumber('10 000,5','ru')`),'10000,5');
+assert.equal(run(`exportNumber('10,000.5','en')`),'10000.5');
+assert.equal(run(`exportNumber('10,000','he')`),'10000');
+assert.equal(run(`exportNumber('20 MiB','en')`),'20 MiB');
+for(const lang of ['ru','en','he']){
+ run(`settings.language='${lang}'`);
+ const skeleton=run('loadingSkeleton()');assert(skeleton.includes('role="status"'));assert(skeleton.includes('aria-hidden="true"'));
+ const empty=run(`emptyState('Нет отгрузок за выбранный период.')`);assert(empty.includes('empty-icon'));
+ if(lang!=='ru')assert(!/[А-Яа-яЁё]/.test(skeleton+empty));
+ assert(run('trendIndicator(115,100)').includes('▲'));assert(run('trendIndicator(95,100)').includes('▼'));
+ assert(run(`trendIndicator(115,100,'down')`).includes('behind'));
+ assert(run(`trendIndicator(95,100,'down')`).includes('ahead'));
+ assert(!run('trendIndicator(20,0)').includes('Infinity'));
+ assert(run('trendIndicator(0,0)').includes('＝'));
+}
+const cell=(text,num=false,tag='TD')=>({innerText:text,tagName:tag,classList:{contains:c=>num&&c==='num'}});
+ctx.table={rows:[{cells:[cell('Клиент',false,'TH'),cell('Сумма',false,'TH')]},{cells:[cell('Тест; "компания"'),cell('10 000',true)]},{hidden:true,cells:[cell('Hidden'),cell('5',true)]}]};
+run(`settings.language='ru';downloadTable(table,'Отгрузки')`);
+assert(link.clicked);assert(link.download.includes('2026-09-12.csv'));
+(async()=>{const text=await blob.text();assert(text.includes('10000'));assert(!text.includes('Hidden'));assert(text.includes('"Тест; ""компания"""'));assert.equal((text.match(/\r\n/g)||[]).length,2);
+ const buf=new Uint8Array(await blob.arrayBuffer());assert.deepEqual([...buf.slice(0,3)],[239,187,191]);
+ const header={append:button=>headerButtons.push(button)};
+ const section={querySelector:selector=>selector==='.panel-head'?header:{textContent:'Shipments'}};
+ let placeholder='';
+ const domTable={...ctx.table,tBodies:[{rows:[ctx.table.rows[1]]}],closest:()=>section,parentElement:{querySelector:()=>null},insertAdjacentHTML:(_,html)=>placeholder=html};
+ document.querySelectorAll=selector=>selector==='#content table'?[domTable]:[];
+ document.createElement=()=>({setAttribute(){},addEventListener(){}});
+ run('enhanceTables()');assert.equal(headerButtons.length,1);assert.equal(headerButtons[0].disabled,false);
+ domTable.tBodies[0].rows=[];run("settings.language='en';enhanceTables()");assert.equal(headerButtons[1].disabled,true);assert(placeholder.includes('No shipments in the selected period.'));
+ console.log('PASS: CSV quoting, formula protection, localized numbers, BOM, displayed rows, filename, accessible loaders/empty states, directional trends and three languages.');
+})().catch(e=>{console.error(e);process.exitCode=1});

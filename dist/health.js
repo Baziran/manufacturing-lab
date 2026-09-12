@@ -15,7 +15,7 @@ function healthSpark(key,title,unit){
  return `<svg class="health-chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(title)}"><path d="${points.map((p,i)=>`${i?'L':'M'}${x(p)},${y(p)}`).join(' ')}" fill="none" stroke="var(--blue)" stroke-width="2"/>${points.map(p=>`<circle cx="${x(p)}" cy="${y(p)}" r="3" fill="var(--blue)"><title>${healthTime(p.at)} · ${decimal(p[key])} ${unit}</title></circle>`).join('')}<text x="${pad}" y="${h-1}">${healthTime(start)}</text><text x="${w-pad}" y="${h-1}" text-anchor="end">${healthTime(end)}</text></svg>`;
 }
 function healthView(){
- if(!healthData)return healthError?'<div class="error">Нет связи с приложением. Повторите обновление.</div>':'<div class="loading">Собираем показатели сервера…</div>';
+ if(!healthData)return healthError?'<div class="error">Нет связи с приложением. Повторите обновление.</div>':loadingSkeleton();
  const a=healthData.app,b=healthData.database,diskPct=a.disk_used_bytes/a.disk_total_bytes*100;
  const connectionPct=b?b.server_connections/b.max_connections*100:0;
  const warning=healthError?'<div class="error">Обновление не выполнено. Показаны предыдущие замеры.</div>':!b?'<div class="error">Приложение доступно, но состояние PostgreSQL прочитать не удалось.</div>':'';
@@ -30,12 +30,12 @@ function scheduleHealth(){
  if(page==='health'&&healthAuto&&!document.hidden&&!healthBusy)healthTimer=setTimeout(refreshHealth,15000);
 }
 async function refreshHealth(){
- if(healthBusy)return;healthBusy=true;clearTimeout(healthTimer);$('#refresh').disabled=true;
+ if(healthBusy)return;healthBusy=true;$('#content').setAttribute('aria-busy','true');clearTimeout(healthTimer);$('#refresh').disabled=true;
  try{
   const response=await fetch('/api/health',{signal:AbortSignal.timeout(12000)});if(!response.ok)throw new Error();
   healthData=await response.json();healthError=false;
   const at=new Date(healthData.checked_at).getTime();
   if(healthHistory.at(-1)?.at!==at){healthHistory.push({at,probe_ms:healthData.probe_ms,cpu_pct:healthData.app.cpu_pct});healthHistory=healthHistory.slice(-40);}
  }catch{healthError=true;}
- finally{healthBusy=false;if(page==='health'){$('#refresh').disabled=false;render();}scheduleHealth();}
+ finally{healthBusy=false;if(page==='health'){$('#content').setAttribute('aria-busy','false');$('#refresh').disabled=false;render();}scheduleHealth();}
 }
