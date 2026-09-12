@@ -14,18 +14,20 @@
 </head>
 <body>
   <aside class="sidebar" id="workspace-sidebar">
-    <button class="sidebar-toggle" id="sidebar-toggle" aria-controls="sidebar-navigation" aria-expanded="true" aria-label="Свернуть меню" title="Свернуть меню"><span aria-hidden="true">‹</span></button>
+    <button class="sidebar-toggle" id="sidebar-toggle" aria-controls="sidebar-navigation sidebar-utilities" aria-expanded="true" aria-label="Свернуть меню" title="Свернуть меню"><span aria-hidden="true">‹</span></button>
     <a class="brand" href="#sales" aria-label="Аналитика производства"><span class="brand-mark">ц</span><span class="brand-copy">цех<span class="brand-caption">MANUFACTURING LAB</span></span></a>
     <div class="nav-label">РАБОЧЕЕ ПРОСТРАНСТВО</div>
     <nav id="sidebar-navigation" aria-label="Дашборды">
       <a href="#sales" data-page="sales" aria-label="Продажи" title="Продажи"><span class="nav-symbol" aria-hidden="true">◫</span><span class="nav-text">Продажи</span><span class="nav-index">01</span></a>
       <a href="#orders" data-page="orders" aria-label="Исполнение заказов" title="Исполнение заказов"><span class="nav-symbol" aria-hidden="true">≡</span><span class="nav-text">Исполнение заказов</span><span class="nav-index">02</span></a>
       <a href="#supply" data-page="supply" aria-label="Комплектующие" title="Комплектующие"><span class="nav-symbol" aria-hidden="true">◇</span><span class="nav-text">Комплектующие</span><span class="nav-index">03</span></a>
-      <a href="#health" data-page="health" aria-label="Сервер и БД" title="Сервер и БД"><span class="nav-symbol" aria-hidden="true">♡</span><span class="nav-text">Сервер и БД</span><span class="nav-index">04</span></a>
-      <a href="#projects" data-page="projects" aria-label="Проекты" title="Проекты"><span class="nav-symbol" aria-hidden="true">▦</span><span class="nav-text">Проекты</span><span class="nav-index">05</span></a>
+      <a href="#projects" data-page="projects" aria-label="Проекты" title="Проекты"><span class="nav-symbol" aria-hidden="true">▦</span><span class="nav-text">Проекты</span><span class="nav-index">04</span></a>
     </nav>
     <div class="sidebar-art" aria-hidden="true"></div>
     <div class="sidebar-bottom"><div class="lab-label">УЧЕБНАЯ ФАБРИКА</div><p>Небольшие данные.<br>Настоящие взаимосвязи.</p><div class="source"><span class="source-dot"></span>PostgreSQL · Docker</div><span class="sidebar-note">Синтетический набор · сентябрь 2026</span></div>
+    <nav class="sidebar-utilities" id="sidebar-utilities" aria-label="Сервер и БД">
+      <a href="#health" data-page="health" aria-label="Сервер и БД" title="Сервер и БД"><span class="nav-symbol" aria-hidden="true">♡</span><span class="nav-text">Сервер и БД</span><span class="nav-index">05</span></a>
+    </nav>
   </aside>
   <main>
     <header class="topbar"><nav class="breadcrumb" id="crumb" aria-label="Путь навигации"></nav><div class="topbar-actions"><span class="demo-label">Учебный стенд</span><button id="settings-button" class="settings-button" aria-label="Настройки" title="Настройки интерфейса"><span aria-hidden="true">⚙</span><span>Настройки</span></button></div></header>
