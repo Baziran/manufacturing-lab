@@ -34,8 +34,8 @@ function downloadTable(table,title){
  link.download=`${title.replace(/[^\p{L}\p{N}_-]+/gu,'-')}-${page==='health'?'live':(data?.period_start?data.period_start+'_'+data.as_of:data?.as_of)||'data'}.csv`;
  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-function enhanceTables(){
- document.querySelectorAll('#content table').forEach(table=>{
+function enhanceTables(root=document){
+ root.querySelectorAll(root===document?'#content table':'table').forEach(table=>{
   const section=table.closest('.panel,.order-components,.full-detail')||table.parentElement;
   const title=section.querySelector('h2,h3')?.textContent?.trim()||tr('Таблица');
   const header=section.querySelector('.panel-head');
@@ -50,5 +50,5 @@ function enhanceTables(){
    table.insertAdjacentHTML('afterend',emptyState(shipping?'Нет отгрузок за выбранный период.':payments?'Нет оплат за выбранный период.':'Нет данных на выбранную дату.'));
   }
  });
- document.querySelectorAll('#content .empty:not(.empty-state)').forEach(node=>{node.innerHTML=`<span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 7l9-4 9 4v10l-9 4-9-4Z M3 7l9 4 9-4 M12 11v10 M7 5l9 4"/></svg></span><strong>${esc(node.textContent)}</strong><span>${esc(tr(page==='health'?'Повторите обновление после восстановления связи.':'Попробуйте изменить дату или фильтр.'))}</span>`;node.classList.add('empty-state');node.setAttribute('role','status');});
+ root.querySelectorAll(root===document?'#content .empty:not(.empty-state)':'.empty:not(.empty-state)').forEach(node=>{node.innerHTML=`<span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 7l9-4 9 4v10l-9 4-9-4Z M3 7l9 4 9-4 M12 11v10 M7 5l9 4"/></svg></span><strong>${esc(node.textContent)}</strong><span>${esc(tr(page==='health'?'Повторите обновление после восстановления связи.':'Попробуйте изменить дату или фильтр.'))}</span>`;node.classList.add('empty-state');node.setAttribute('role','status');});
 }

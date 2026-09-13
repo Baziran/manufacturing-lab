@@ -42,6 +42,6 @@ async function loadOrderEvidence(){
  const id=holder.dataset.order,date=data.as_of;
  const results=await Promise.allSettled([`/api/audit?order_id=${id}`,`/api/protocols?order_id=${id}&as_of=${date}`].map(async url=>{const r=await fetch(url,{signal:AbortSignal.timeout(8000)});if(!r.ok)throw new Error();return r.json();}));
  if(!holder.isConnected)return;
- holder.innerHTML=`<h2>${opText('История изменений · текущее состояние')}</h2><p class="note">${opText('Учебные копии показаны отдельно от исходных заказов')}</p>${results[0].status==='fulfilled'?auditTable(results[0].value.rows):opText('Недоступно')}<h2>${opText('Протоколы испытаний · MongoDB')}</h2>${results[1].status==='fulfilled'?protocolTable(results[1].value.rows):opText('Недоступно')}`;
- localize(holder);enhanceTables();
+ holder.innerHTML=`<section class="panel operations-panel"><h2>${opText('История изменений · текущее состояние')}</h2><p class="note">${opText('Учебные копии показаны отдельно от исходных заказов')}</p>${results[0].status==='fulfilled'?auditTable(results[0].value.rows):opText('Недоступно')}</section><section class="panel operations-panel"><h2>${opText('Протоколы испытаний · MongoDB')}</h2>${results[1].status==='fulfilled'?protocolTable(results[1].value.rows):opText('Недоступно')}</section>`;
+ localize(holder);enhanceTables(holder);
 }
