@@ -2,6 +2,12 @@
 // Russian source strings are stable translation keys. Parameterized entries
 // translate whole messages, preserving numbers and database identifiers.
 const translationRows = [
+['Открыть PDF протокола','Open protocol PDF','פתיחת דוח בדיקה PDF'],
+['Создана учебная копия заказа','Demo order copy created','נוצר עותק הזמנה לתרגול'],
+['Срок отгрузки перенесён для дополнительных испытаний','Shipment deadline moved for additional testing','מועד המשלוח נדחה לצורך בדיקות נוספות'],
+['Статус учебной копии изменён после проверки плана','Demo copy status changed after planning review','סטטוס עותק התרגול שונה לאחר בדיקת התוכנית'],
+['Создано','Created','נוצר'],['Изменено','Updated','עודכן'],['Удалено','Deleted','נמחק'],
+
 ["Закрыть протокол", "Close protocol", "סגירת דוח הבדיקה"],
 ["Оператор испытания", "Test operator", "מבצע הבדיקה"],
 ["Параметр", "Parameter", "פרמטר"],

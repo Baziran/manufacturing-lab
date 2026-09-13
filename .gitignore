@@ -19,3 +19,7 @@ acme/
 tls/
 
 ops/
+
+# Rendered artifact copies and visual verification intermediates
+output/
+tmp/

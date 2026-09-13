@@ -42,3 +42,7 @@ assert.equal(run('measurementOutcome({value:1})'),'Без оценки');
 run("selectedKind='order';selected=102");assert(!run('evidenceOrderLink(102)').includes('href'));
 assert(run('evidenceOrderLink(108)').includes('#orders/order/108'));
 console.log('PASS: protocol measurements, localization, escaping and no self-navigation');
+ctx.sample.attachments=[{name:'safe.pdf',url:'/protocols/QA-102-DEMO-2.pdf'},{name:'bad',url:'javascript:alert(1)'},{name:'outside',url:'https://example.com/test.pdf'}];
+assert(run('protocolAttachments(sample)').includes('/protocols/QA-102-DEMO-2.pdf'));
+assert(!run('protocolAttachments(sample)').includes('javascript:'));
+assert(!run('protocolAttachments(sample)').includes('example.com'));
