@@ -15,7 +15,7 @@ import urllib.request
 
 BASE = Path('/opt/manufacturing-demo')
 OVERRIDE = BASE / 'compose.release.json'
-ALLOWED = {'Dockerfile', 'requirements.txt', 'server.py', 'database.py', 'health.py', 'dist', 'queries'}
+ALLOWED = {'Dockerfile', 'requirements.txt', 'server.py', 'database.py', 'health.py', 'operations.py', 'dist', 'queries'}
 
 
 def run(*args: str) -> None:

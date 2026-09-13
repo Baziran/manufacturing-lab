@@ -1,0 +1,8 @@
+# UTC: server cron timezone. All commands serialized by ops.py's flock.
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+5 * * * * root /usr/bin/python3 /opt/manufacturing-demo/deploy/ops.py backup >> /var/log/manufacturing-demo-ops.log 2>&1
+20 1 * * * root /usr/bin/python3 /opt/manufacturing-demo/deploy/ops.py base >> /var/log/manufacturing-demo-ops.log 2>&1
+35 2 * * * root /usr/bin/python3 /opt/manufacturing-demo/deploy/ops.py restore >> /var/log/manufacturing-demo-ops.log 2>&1
+45 3 * * 0 root /usr/bin/python3 /opt/manufacturing-demo/deploy/ops.py pitr >> /var/log/manufacturing-demo-ops.log 2>&1
+*/5 * * * * root /usr/bin/python3 /opt/manufacturing-demo/deploy/ops.py status >> /var/log/manufacturing-demo-ops.log 2>&1

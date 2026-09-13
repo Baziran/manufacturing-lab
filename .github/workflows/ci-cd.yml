@@ -45,6 +45,7 @@ jobs:
           node tests/test_order_time.cjs
           node tests/test_periods.cjs
           node tests/test_projects.cjs
+          node tests/test_operations.cjs
           sh -n deploy/*.sh
       - name: Build and smoke-test application container
         run: |
@@ -81,7 +82,7 @@ jobs:
         env:
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
         run: |
-          git archive --format=tar.gz HEAD Dockerfile requirements.txt server.py database.py health.py dist queries > /tmp/release.tar.gz
+          git archive --format=tar.gz HEAD Dockerfile requirements.txt server.py database.py health.py operations.py dist queries > /tmp/release.tar.gz
           ssh -i ~/.ssh/demo_deploy -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 "root@$DEPLOY_HOST" "deploy $GITHUB_SHA" < /tmp/release.tar.gz
           curl --fail --retry 10 --retry-delay 2 "https://$DEPLOY_HOST/api/health" -o /tmp/health.json
           python3 -c 'import json; assert json.load(open("/tmp/health.json"))["status"] == "ok"'

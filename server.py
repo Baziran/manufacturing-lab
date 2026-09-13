@@ -18,6 +18,7 @@ from starlette.concurrency import run_in_threadpool
 
 from database import create_pool
 from health import collect_health, HEALTH_QUERIES
+from operations import mongo_client, protocols, backup_status, audit_rows
 
 ROOT = Path(__file__).parent
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ INVALID_DATE = 'Проверьте период: начальная дата н�
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     pool = create_pool()
     app.state.pool = pool
+    app.state.mongo = mongo_client()
     # Background opening lets /api/health report a database outage.
     pool.open(wait=False)
     logger.info('Application started; database pool min=%s max=%s', pool.min_size, pool.max_size)
@@ -43,6 +45,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         await run_in_threadpool(pool.close)
+        if app.state.mongo is not None:
+            app.state.mongo.close()
         logger.info('Database pool closed')
 
 
@@ -71,6 +75,28 @@ def health(request: Request) -> JSONResponse:
 def queries() -> JSONResponse:
     """Fixed parameterized SQL used by this training application."""
     return json_response({**QUERIES, **HEALTH_QUERIES})
+
+
+@app.get('/api/operations', tags=['Infrastructure'])
+def operations_status() -> JSONResponse:
+    """Sanitized host-job receipts only. Mutations are SSH-only."""
+    return json_response(backup_status())
+
+
+@app.get('/api/audit', tags=['Training'])
+def audit(request: Request, order_id: Annotated[int | None, Query(ge=1)] = None,
+          entity: Annotated[str | None, Query(pattern=r'^(public\.orders|operations\.demo_orders)$')] = None) -> JSONResponse:
+    try:
+        return json_response({'rows':audit_rows(request.app.state.pool,order_id,entity)})
+    except (psycopg.Error, PoolTimeout, TooManyRequests):
+        return json_response({'error':'Audit unavailable','rows':[]},503)
+
+
+@app.get('/api/protocols', tags=['Quality'])
+def quality_protocols(request: Request, order_id: Annotated[int | None, Query(ge=1)] = None,
+                      as_of: Annotated[date | None, Query()] = None) -> JSONResponse:
+    result = protocols(request.app.state.mongo,order_id,min(as_of or business_today(),business_today()))
+    return json_response(result,503 if result['status']=='unavailable' else 200)
 
 
 @app.get('/api/dashboard', tags=['Analytics'], responses={400: {'description': 'Invalid report date'},

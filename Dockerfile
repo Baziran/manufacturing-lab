@@ -2,7 +2,7 @@ FROM python:3.12-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY server.py health.py database.py ./
+COPY server.py health.py database.py operations.py ./
 COPY dist ./dist
 COPY queries ./queries
 USER 10001

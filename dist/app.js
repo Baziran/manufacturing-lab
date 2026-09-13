@@ -140,7 +140,7 @@ function orderClaimsPanel(o){
  if(!rows.length)return '';
  return `<section class="panel order-claims-panel"><div class="panel-head"><div><h2><span>Рекламации по заказу</span> № ${o.order_id}</h2><p>Статус обращения относится к указанному изделию, а не ко всему заказу.</p></div></div><div class="table-wrap"><table><thead><tr><th>Обращение</th><th>Изделие</th><th>Причина</th><th class="num">Количество</th><th>Статус рекламации</th><th>Возврат товара</th><th>Решение</th></tr></thead><tbody>${rows.map(c=>`<tr><td>RMA-${c.claim_id}<small>${d(c.opened_at)}</small></td><td><span>${esc(c.product)}</span><small>${esc(c.sku)}</small></td><td>${esc(claimReasons[c.reason])}</td><td class="num">${n(c.quantity)}</td><td><span class="badge ${c.claim_status==='closed'?'paid':'partial'}">${claimStates[c.claim_status]}</span></td><td>${c.returned_at?`<span>Возврат принят</span><small>${d(c.returned_at)}</small>`:'<span>Возврат не зарегистрирован</span>'}</td><td>${c.resolution?`<span>${claimResolutions[c.resolution]}</span><small>${d(c.closed_at)}</small>`:'<span>Решение не зарегистрировано</span>'}</td></tr>`).join('')}</tbody></table></div><p class="note">Ниже — исполнение исходного заказа. Возврат изделия не отменяет неотгруженные позиции.</p></section>`;
 }
-function orderDossier(o){return `<div class="order-dossier">${orderClaimsPanel(o)}${orderDetail(o)}${orderItems(o)}${orderComponents(o)}</div>`;}
+function orderDossier(o){return `<div class="order-dossier">${orderClaimsPanel(o)}${orderDetail(o)}${orderItems(o)}${orderComponents(o)}<section class="panel operations-panel" id="order-evidence" data-order="${o.order_id}"></section></div>`;}
 function managerName(key){if(!key?.startsWith('manager-'))return null;try{const name=decodeURIComponent(key.slice(8));return name.trim()&&name.length<=100?name:null;}catch{return null;}}
 function listTitle(key){const manager=managerName(key);return manager?'Менеджер · '+manager:cardLabels[key];}
 function isList(section,key){return cardLists[section].includes(key)||(section==='sales'&&managerName(key)!==null);}
@@ -318,6 +318,7 @@ function render(){
  if(page==='health'){
   $('#content').innerHTML=healthView();
   $('#freshness').textContent=healthData?'Последний замер: '+healthTime(healthData.checked_at):'Ожидание показателей…';
+  bindOperations();
   $('#health-auto')?.addEventListener('change',e=>{healthAuto=e.target.checked;scheduleHealth();});
  }else if(data){
   const detail=(settings.detailMode==='drill'||selectedKind==='project')&&selected!==null;
@@ -347,7 +348,7 @@ function render(){
  syncSidebar();
  $('#comparison-control').hidden=page!=='sales'||!!listView||selected!==null;
  $('#ghost-comparison').checked=settings.ghostComparison;
- fitChart();localize();enhanceTables();
+ fitChart();localize();enhanceTables();loadOrderEvidence();
 }
 async function refresh(){if(page==='health')return refreshHealth();const requestedPeriod=periodQuery();pendingPeriod=requestedPeriod;const id=++requestId;$('#content').setAttribute('aria-busy','true');if(!data)$('#content').innerHTML=loadingSkeleton();$('#refresh').disabled=true;$('#error').hidden=true;try{const response=await fetch('/api/dashboard?'+requestedPeriod);const result=await response.json();if(id!==requestId)return;if(!response.ok)throw new Error(result.error||'Не удалось загрузить данные.');data=result;loadedPeriod=requestedPeriod;render();$('#freshness').textContent=freshnessText();}catch(e){if(id!==requestId)return;$('#error').textContent=e.message;$('#error').hidden=false;$('#freshness').textContent='Обновление не выполнено. Показанные данные могут быть неактуальны.';if(!data)$('#content').innerHTML='<div class="empty">Данные недоступны. После восстановления подключения нажмите обновление.</div>';}finally{if(id===requestId){pendingPeriod='';$('#content').setAttribute('aria-busy','false');$('#refresh').disabled=false;localize();}}}
 function navigate(){
