@@ -2,6 +2,12 @@
 
 This personal project translates manufacturing management questions into a working analytical interface. Its value as a portfolio example is the connection between business requirements, data definitions, usable screens and deployment.
 
+## What this project helps assess
+
+**Technical project management:** turning a management question into requirements, priorities and acceptance criteria. **Systems integration:** connecting data, application behavior and operating procedures. **Manufacturing knowledge:** interpreting orders, supply constraints, shipments, payments and quality claims correctly.
+
+I initiated the project, owned its business requirements and directed implementation through review, corrections and acceptance. AI tools generated code and supported technical implementation and deployment. The combination makes both the product decisions and the resulting application available for assessment.
+
 ## Two-minute demo
 
 1. [Open the demo](https://83.147.192.229/#sales), select English and September 2026.
@@ -30,6 +36,12 @@ Future dates can contain plans, not future actuals. Period comparisons use equiv
 ### Make delivery part of the project
 
 The repository includes environment setup, tests, Docker packaging, CI/CD and operational exercises. The public application is read-only; administrative work stays outside the browser. The single-server setup and same-server backups remain explicit limitations.
+
+## Professional context, separate from the demo
+
+At the factory I combined commercial responsibilities with enterprise IT ownership. For warehouse automation, I defined package/content relationships, scan validation and the handoff between warehouse and accounting; an external integrator developed the handheld application. I also implemented CRM, electronic document exchange and product-traceability workflows, including equipment setup and operator training. Enterprise IT support covered up to 20–25 users; the traceability workflow used four printers and two operators.
+
+These examples support cross-functional coordination and implementation ownership. They are not deployments of Manufacturing Lab, and their scale or results must not be attributed to this synthetic-data demonstration.
 
 ## Contribution and scope
 

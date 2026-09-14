@@ -1,12 +1,10 @@
 # Manufacturing Lab
 
-## Copyright and reuse
-
-**Copyright (c) 2026 Grigory Shmykov. All rights reserved.** Shared for recruitment and professional evaluation only, including AI-assisted review under the license conditions. Copying, running, modification, redistribution and reuse require prior written permission, subject to the limited evaluation and platform/legal exceptions in [LICENSE.md](LICENSE.md). No permission is granted for model training. This is not an open-source project.
-
 **From a management question to the order, component or document behind it.**
 
 A personal manufacturing analytics demo by **Grigory Shmykov**, built with AI assistance and informed by hands-on experience in manufacturing, procurement, sales and enterprise IT. It connects sales, order fulfillment, BOM shortages, claims and project milestones in one browser interface. All business records are synthetic.
+
+**Portfolio focus:** technical project management, business-systems integration and manufacturing process improvement. I initiated the project, defined its business meaning and directed iterative delivery from management questions to a working application.
 
 [Open the live demo](https://83.147.192.229/#sales) · [Two-minute walkthrough](docs/PORTFOLIO.md) · [Русская документация](README.ru.md)
 
@@ -24,7 +22,15 @@ The interface supports **English, Russian and Hebrew**, including right-to-left 
 
 ## My role
 
-I defined the business scenarios, metrics, screen structure, priorities and acceptance criteria. I reviewed the results against manufacturing workflows and directed corrections, including the distinction between an order, its shipments, payment and a later return. AI tools produced code and assisted with technical implementation and deployment under my direction. This is a personal portfolio project, separate from my enterprise implementations.
+I originated the project and defined the business scenarios, metrics, screen structure, priorities and acceptance criteria. I accepted results against manufacturing workflows and required corrections, including the distinction between an order, its shipments, payment and a later return. AI tools produced code and assisted with technical implementation and deployment under my direction. This is a personal portfolio project, separate from my enterprise implementations.
+
+## Enterprise experience behind the demo
+
+My factory responsibilities included enterprise IT support for up to 20–25 users and coordinating systems changes with external integrators, accounting, production and warehouse staff. I specified a barcode-based shipping workflow, implemented CRM and electronic document exchange using the products' standard capabilities, and organized product traceability with four printers and two operators. These are separate professional implementations; the demo does not claim their users or business results.
+
+## Copyright and reuse
+
+**Copyright (c) 2026 Grigory Shmykov. All rights reserved.** Shared for recruitment and professional evaluation only, including AI-assisted review under the license conditions. Copying, running, modification, redistribution and reuse require prior written permission, subject to the limited evaluation and platform/legal exceptions in [LICENSE.md](LICENSE.md). No permission is granted for model training. This is not an open-source project.
 
 ## Architecture
 
