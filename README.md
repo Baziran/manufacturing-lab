@@ -22,11 +22,7 @@ The interface supports **English, Russian and Hebrew**, including right-to-left 
 
 ## My role
 
-I originated the project and defined the business scenarios, metrics, screen structure, priorities and acceptance criteria. I accepted results against manufacturing workflows and required corrections, including the distinction between an order, its shipments, payment and a later return. AI tools produced code and assisted with technical implementation and deployment under my direction. This is a personal portfolio project, separate from my enterprise implementations.
-
-## Enterprise experience behind the demo
-
-My factory responsibilities included enterprise IT support for up to 20–25 users and coordinating systems changes with external integrators, accounting, production and warehouse staff. I specified a barcode-based shipping workflow, implemented CRM and electronic document exchange using the products' standard capabilities, and organized product traceability with four printers and two operators. These are separate professional implementations; the demo does not claim their users or business results.
+I originated the project and defined the business scenarios, metrics, screen structure, priorities and acceptance criteria. I accepted results against manufacturing workflows and required corrections, including the distinction between an order, its shipments, payment and a later return. AI tools produced code and assisted with technical implementation and deployment under my direction.
 
 ## Copyright and reuse
 

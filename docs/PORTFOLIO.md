@@ -37,12 +37,6 @@ Future dates can contain plans, not future actuals. Period comparisons use equiv
 
 The repository includes environment setup, tests, Docker packaging, CI/CD and operational exercises. The public application is read-only; administrative work stays outside the browser. The single-server setup and same-server backups remain explicit limitations.
 
-## Professional context, separate from the demo
-
-At the factory I combined commercial responsibilities with enterprise IT ownership. For warehouse automation, I defined package/content relationships, scan validation and the handoff between warehouse and accounting; an external integrator developed the handheld application. I also implemented CRM, electronic document exchange and product-traceability workflows, including equipment setup and operator training. Enterprise IT support covered up to 20–25 users; the traceability workflow used four printers and two operators.
-
-These examples support cross-functional coordination and implementation ownership. They are not deployments of Manufacturing Lab, and their scale or results must not be attributed to this synthetic-data demonstration.
-
 ## Contribution and scope
 
 **Grigory Shmykov:** business requirements, metrics, workflow design, prioritization, acceptance review and direction of corrections. **AI assistance:** code generation and technical implementation/deployment support. The project demonstrates using manufacturing and IT experience to direct and evaluate a working system; it is not a claim that all source code was written manually.
