@@ -1,5 +1,9 @@
 # Manufacturing Lab
 
+## Copyright and reuse
+
+**Copyright (c) 2026 Grigory Shmykov. All rights reserved.** Shared for recruitment and professional evaluation only, including AI-assisted review under the license conditions. Copying, running, modification, redistribution and reuse require prior written permission, subject to the limited evaluation and platform/legal exceptions in [LICENSE.md](LICENSE.md). No permission is granted for model training. This is not an open-source project.
+
 **From a management question to the order, component or document behind it.**
 
 A personal manufacturing analytics demo by **Grigory Shmykov**, built with AI assistance and informed by hands-on experience in manufacturing, procurement, sales and enterprise IT. It connects sales, order fulfillment, BOM shortages, claims and project milestones in one browser interface. All business records are synthetic.
