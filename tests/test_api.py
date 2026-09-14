@@ -206,6 +206,32 @@ class ApiTests(unittest.TestCase):
             for table in ('projects', 'project_stages'):
                 self.assertFalse(conn.execute("SELECT has_table_privilege(current_user, %s, 'UPDATE') AS allowed", (table,)).fetchone()['allowed'])
 
+    def test_september_14_activity_reconciles(self) -> None:
+        with patch('server.business_today', return_value=date(2026, 9, 14)):
+            daily = self.client.get('/api/dashboard?date_from=2026-09-14&date_to=2026-09-14').json()
+            self.assertEqual({o['order_id'] for o in daily['orders']}, {113, 114, 115, 116})
+            for collection, field, expected in [('orders', 'booked', 92000),
+                                               ('shipments', 'shipped', 59500),
+                                               ('payments', 'paid', 50000)]:
+                self.assertEqual(sum(r['amount'] for r in daily[collection]), expected)
+                self.assertEqual(daily['trend'][0][field], expected)
+            report = self.client.get('/api/dashboard?month=2026-09').json()
+            orders = {o['order_id']: o for o in report['orders']}
+            self.assertEqual(len(orders), 16)
+            self.assertEqual(report['trend'][-1]['day'], '2026-09-14')
+            for order_id in (105, 106, 109, 110, 113):
+                self.assertEqual(orders[order_id]['fulfillment_status'], 'shipped')
+                self.assertEqual(orders[order_id]['remaining_qty'], 0)
+            self.assertEqual(orders[114]['shipped_amount'], 12000)
+            self.assertEqual(orders[114]['payment_status'], 'partial')
+            self.assertEqual(orders[115]['shipped_amount'], 0)
+            self.assertEqual(orders[116]['payment_status'], 'unpaid')
+            self.assertEqual(orders[113]['first_order_date'], '2026-09-14')
+            self.assertTrue(all(i['shipped_qty'] <= i['quantity'] for o in orders.values() for i in o['items']))
+            for collection, field in [('shipments', 'shipped'), ('payments', 'paid')]:
+                self.assertEqual(sum(r['amount'] for r in report[collection]),
+                                 sum(r[field] for r in report['trend']))
+
     def test_pool_reuse_and_rollback(self) -> None:
         pool = app.state.pool
         with pool.connection() as conn:
