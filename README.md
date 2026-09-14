@@ -1,168 +1,82 @@
-# Manufacturing Lab — аналитика производства
+# Manufacturing Lab
 
-Дашборды для управления производством: продажи и денежный поток, исполнение заказов, дефицит комплектующих, состояние сервера/БД и проекты по сложным заказам. FastAPI + PostgreSQL + Docker; интерфейс на русском, английском и иврите. Все бизнес-данные синтетические.
+**From a management question to the order, component or document behind it.**
 
-## Быстрый старт
+A personal manufacturing analytics demo by **Grigory Shmykov**, built with AI assistance and informed by hands-on experience in manufacturing, procurement, sales and enterprise IT. It connects sales, order fulfillment, BOM shortages, claims and project milestones in one browser interface. All business records are synthetic.
 
-Нужны Docker с Compose и OpenSSL. Из папки проекта одной командой:
+[Open the live demo](https://83.147.192.229/#sales) · [Two-minute walkthrough](docs/PORTFOLIO.md) · [Русская документация](README.ru.md)
 
-```sh
-sh deploy/prepare-env.sh .env && docker compose up -d --build
-```
+## What to explore
 
-Скрипт создаёт случайные пароли при первом запуске и сохраняет существующий `.env`. Если он уже настроен, достаточно `docker compose up -d --build`.
-
-- **Приложение:** [http://localhost:8765](http://localhost:8765/)
-- **Swagger UI:** [http://localhost:8765/docs](http://localhost:8765/docs)
-- **Схема OpenAPI:** [http://localhost:8765/openapi.json](http://localhost:8765/openapi.json)
-
-Порт внутри контейнера — 8000, на компьютере — 8765. По умолчанию отчёт на 12 сентября 2026 года; доступен весь сентябрь, сравнение с августом. Данные сохраняются в Docker volume при остановке и пересборке.
-
-## Архитектура
-
-Браузер → FastAPI/Uvicorn → ограниченный пул psycopg → PostgreSQL. В публичной конфигурации перед FastAPI работает nginx, БД не публикует порт.
-
-- Один `ConnectionPool` на процесс, запуск и закрытие через lifespan. По умолчанию 1–5 соединений, ожидание до 3 секунд, очередь до 20 запросов. Соединения проверяются перед выдачей; контекст пула завершает транзакцию и возвращает соединение, в том числе после исключения.
-- Синхронные обработчики БД выполняются в рабочих потоках FastAPI. Это не асинхронный драйвер; сетевой сервер ASGI не блокируется этими запросами. См. [FastAPI concurrency](https://fastapi.tiangolo.com/async/) и [psycopg pool](https://www.psycopg.org/psycopg3/docs/advanced/pool.html).
-- Приложение использует отдельную роль только для чтения. Все запросы отчёта выполняются в одной транзакции `REPEATABLE READ, READ ONLY`; время SQL ограничено.
-- Даты валидируются FastAPI/Pydantic. Сохранён контракт интерфейса: неверная дата → HTTP 400 с полем `error`, недоступная БД → 503; здоровье возвращает состояние `degraded`.
-- Суммы сериализуются JSON-числами, даты — ISO. Логи пишутся через `logging` в stdout/stderr; пароль и строка подключения не добавляются в сообщения приложения.
-- Раздел здоровья использует тот же пул и кеширует замеры на 5 секунд. Его проверка измеряет получение соединения из пула и `SELECT 1`, а не обязательное открытие нового соединения.
-
-## Конфигурация
-
-Шаблон настроек — [.env.example](.env.example), значения паролей в нём пустые. `.env` и `.env.demo` исключены из Git, контекста сборки и архива публикации.
-
-| Переменная | Назначение |
+| Business question | Demonstrated workflow |
 |---|---|
-| `POSTGRES_PASSWORD` | Пароль владельца учебной БД |
-| `DASHBOARD_PASSWORD` | Пароль роли приложения только для чтения |
-| `DB_POOL_MIN_SIZE` / `DB_POOL_MAX_SIZE` | Размер пула, по умолчанию 1 / 5 |
-| `DB_POOL_TIMEOUT` | Ожидание соединения, секунды; по умолчанию 3 |
-| `LOG_LEVEL` | Уровень логирования приложения, по умолчанию INFO |
+| Are orders turning into shipments and cash? | Separate order, shipment and payment measures; compare periods and open the underlying records. |
+| What is preventing an order from shipping? | Follow an order to its items, BOM, component shortages and expected supply. |
+| What happened after delivery? | Connect claims and returned items to the original order without rewriting the shipment history. |
+| Is a complex order progressing? | Review weighted milestones, dependencies, acceptance criteria and a Kanban view. |
+| Can the supporting system be operated and checked? | Inspect application/database health, recorded backup and restore checks, change history and sample quality protocols. |
 
-Compose передаёт пароль приложения как `DB_PASSWORD`; прямой запуск Python также поддерживает `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` или `DATABASE_URL`. Пароли задаются отдельными параметрами соединения, поэтому специальные символы не требуют ручного URL-кодирования.
+The interface supports **English, Russian and Hebrew**, including right-to-left layout, themes, drill-down navigation and CSV export.
 
-Существующий том не переинициализируется: простая замена пароля в `.env` не меняет пароль в PostgreSQL. Для существующей установки сохраните текущие значения или выполните отдельную ротацию ролей. В этой рабочей копии текущие значения перенесены в `.env` без удаления данных.
+## My role
 
-## Интерфейс и выгрузка
+I defined the business scenarios, metrics, screen structure, priorities and acceptance criteria. I reviewed the results against manufacturing workflows and directed corrections, including the distinction between an order, its shipments, payment and a later return. AI tools produced code and assisted with technical implementation and deployment under my direction. This is a personal portfolio project, separate from my enterprise implementations.
 
-Четыре дашборда поддерживают три языка и темы. Таблицы экспортируются кнопкой ↓ CSV в UTF-8 с BOM и разделителем `;` для Excel; сохраняются показанные строки, фильтры и язык, текст защищён от формул. Первая загрузка показывает скелет, повторная — индикатор обновления без скрытия данных. Числа используют tabular-nums, сравнения — стрелки и текст, пустые таблицы — объяснение и подсказку.
+## Architecture
 
-## CI / CD
-
-GitHub Actions проверяет pull request и изменения `main`: тесты API/пула, сборка Docker и HTTP-проверка. Успешный push в `main` публикует ту же ревизию на демонстрационный сервер с проверкой здоровья и возвратом прежнего образа при ошибке. Подробности и границы доступа: [CI/CD](deploy/CI-CD.md).
-
-## Проверки и учебные материалы
-
-Контракт API, документация, даты, переиспользование соединений, откат после SQL-ошибки и обработка недоступной БД проверяются в `tests/test_api.py`. Зависимости тестов отделены в `requirements-dev.txt`. При запущенной учебной БД выполните `sh deploy/test.sh`: проверки работают в одноразовом контейнере, роль приложения остаётся только для чтения.
-
-Подробности модели данных, сценарии дашбордов и упражнения: [учебные заметки](docs/training-notes.md). Публичное размещение: [инструкция](deploy/README.md).
-
-```sh
-docker compose logs --tail=100 dashboard
-docker compose stop
-docker compose start
+```mermaid
+flowchart LR
+    UI[Browser: HTML / CSS / JavaScript] --> WEB[Nginx / HTTPS]
+    WEB --> API[FastAPI / Uvicorn]
+    API --> POOL[Bounded psycopg connection pool]
+    POOL --> PG[(PostgreSQL)]
+    API --> MONGO[(MongoDB quality protocols)]
+    API --> OPS[Read-only operations status]
 ```
 
-### Рекламации и возвраты
+- **Data:** PostgreSQL reporting queries, BOM and order relationships; a read-only application role and consistent report snapshots. Optional MongoDB integration provides sample quality documents.
+- **Application:** Python, FastAPI, Pydantic, psycopg and OpenAPI. Database handlers use synchronous connections in worker threads.
+- **Delivery:** Docker Compose, GitHub Actions checks and an optional deployment job with a health check and application-image rollback. The demo uses Nginx and Let's Encrypt HTTPS.
+- **Operations:** backup and restore exercises, audit events and a read-only status view. These demonstrate operating procedures on one demo server, not a redundant production service.
 
-В продажах доступен блок с пятью синтетическими обращениями: повреждение при перевозке, брак при включении, некомплект и несоответствие характеристик. Карточки и причины открывают фильтрованный реестр с переходом к заказу и экспортом CSV. Период — месяц отчёта; возврат и закрытие видны только после соответствующей даты. Стоимость изделий не является суммой возмещения; рекламации не создают финансовые или складские проводки.
+## Run locally
 
-Для существующей локальной базы примените миграцию до запуска новой версии:
-
-```sh
-docker compose exec -T db psql -U lab -d manufacturing_lab -v ON_ERROR_STOP=1 < db/migrations/05-claims.sql
-docker compose up -d --build dashboard
-```
-
-Исправление учебного сценария №102: `db/migrations/06-return-scenario.sql`. Заказ полностью отгружен 6 сентября (срок — 7 сентября), рекламация открыта 7 сентября, один прибор возвращён 9 сентября. Для существующей БД примените скрипт через `psql -v ON_ERROR_STOP=1`, аналогично предыдущей миграции.
-
-
-### Периоды отчётов и журналов
-
-Дашборды выбирают календарный месяц (по умолчанию сентябрь 2026).
-Фактические данные ограничены сегодняшним днём в часовом поясе Asia/Jerusalem —
-это ограничение API действует и для журналов с будущей конечной датой.
-Пунктирные линии показывают все фактические данные предыдущего месяца.
-Проценты сравнения и маркер плана берут такой же прошедший период предыдущего месяца;
-закрытые месяцы сравниваются целиком. Ось графика показывает весь месяц,
-тонкая вертикальная линия точками отмечает сегодня, фактические ряды после неё
-не продолжаются; исторический пунктир продолжается до конца прошлого месяца.
-Будущие месяцы не содержат собственных фактических рядов.
-План остаётся учебным: 240 000 ₪ в месяц.
-
-В журналах доступен независимый включительный диапазон «с — по» до 366 дней.
-По умолчанию это выбранный месяц; изменение месяца сбрасывает диапазон на его границы.
-Заказы отбираются по дате создания, отгрузки/оплаты — по дате документа,
-рекламации — по дате открытия, новые клиенты — по первому заказу,
-ожидаемые поставки — по ожидаемой дате. Статусы и суммы исполнения заказа
-считаются на конец периода, но не позже сегодня, по всей истории, а не только по документам диапазона.
-Переход в карточку сохраняет диапазон, включая заказы, созданные раньше него.
-Склад по-прежнему использует фиксированный учебный снимок 12 сентября;
-журнал компонентов показывает потребность на конец периода, не историю движения.
-
-API: `/api/dashboard?month=2026-09` или
-`/api/dashboard?date_from=2026-08-15&date_to=2026-09-12`.
-Параметры несовместимых режимов и некорректные диапазоны возвращают 400.
-Старый `?date=2026-09-12` сохранён для учебных упражнений (с начала месяца по дату);
-без параметров API также сохраняет прежний снимок 12 сентября.
-Данные для демонстрации есть в августе и сентябре 2026; остальные месяцы пустые.
-
-График заказов и отгрузок: наведение или касание выбирает день и открывает общую
-подсказку с накопленными суммами отдельно для выбранного и прошлого месяца.
-Будущие даты текущего месяца обозначены как отсутствие фактических данных.
-С клавиатуры: Tab на график, стрелки для выбора дня, Home/End, Escape для закрытия.
-
-## Проекты по сложным заказам
-
-Раздел «Проекты» в левой панели можно скрыть в настройках; предпочтение сохраняется в браузере. Три учебных проекта связаны с заказами: обзор сроков и рисков, 18 этапов с ответственными, критериями приёмки и зависимостями, план этапов и канбан. Прогресс считается по весу принятых этапов, отдельно от отгрузок и оплат. Планы видны вперёд, фактические события ограничены датой отчёта. Текущая версия — обзор без изменения этапов и согласования сроков.
-
-Для существующей базы примените добавочную миграцию (после резервной копии):
+Requirements: Docker with Compose and OpenSSL. From the repository root:
 
 ```sh
-docker compose exec -T db psql -U lab -d manufacturing_lab -v ON_ERROR_STOP=1 < db/migrations/07-projects.sql
+sh deploy/prepare-env.sh .env
+docker compose up -d --build
 ```
 
-На новой базе Docker применяет миграцию автоматически.
+The setup script generates local passwords on the first run and preserves an existing `.env`. Do not commit that file. An existing database volume keeps its data and credentials.
 
-## HTTPS на демонстрационном сервере
+- [Application](http://localhost:8765/)
+- [API documentation](http://localhost:8765/docs)
+- [OpenAPI schema](http://localhost:8765/openapi.json)
 
-Публичный портал: **https://83.147.192.229/**. HTTP перенаправляется на HTTPS с сохранением пути и параметров. Сертификат Let's Encrypt содержит IP-адрес и использует профиль `shortlived` (около шести дней). Домен не требуется.
+Choose **September 2026** in the interface to explore the sample data; August is available for comparison. Other months have no seeded business activity. Operational integrations need additional setup described below.
 
-На сервере применяется дополнительный файл Compose:
+## Verification and implementation details
 
-```sh
-docker compose --env-file .env.demo -f compose.demo.yaml -f compose.release.json -f compose.https.yaml up -d
-```
+| Area | Evidence in the repository |
+|---|---|
+| API contracts, database pool and failure handling | [API tests](tests/test_api.py), [database access](database.py) |
+| Reporting and order relationships | [SQL queries](queries/), [schema and seed data](db/init.sql) |
+| Claims, periods, navigation and projects | [Tests](tests/), [frontend](dist/) |
+| CI checks and deployment boundary | [Workflow](.github/workflows/ci-cd.yml), [CI/CD runbook](deploy/CI-CD.md) |
+| Backups, restore checks and audit evidence | [Operations runbook](deploy/OPERATIONS.md), [operations API](operations.py) |
 
-`compose.https.yaml` подключает порт 443, конфигурацию Nginx и сертификат только для чтения. Сам сертификат, закрытый ключ и учётная запись ACME хранятся на сервере в `/etc/letsencrypt`, вне репозитория. Каталог `acme/` предназначен только для HTTP-01 challenge. Основной `compose.demo.yaml` остаётся пригодным для первичного запуска без сертификата.
+With the local database running, `sh deploy/test.sh` runs the documented container-based checks. CI also checks JavaScript and the container build. This README describes the checks provided; it does not claim that every environment or deployment is continuously verified.
 
-Первичный выпуск после подключения HTTP-каталога проверки (Certbot 5.4+):
+## Scope
 
-```sh
-docker run --rm \
-  -v /etc/letsencrypt:/etc/letsencrypt \
-  -v /var/lib/letsencrypt:/var/lib/letsencrypt \
-  -v /var/log/letsencrypt:/var/log/letsencrypt \
-  -v /opt/manufacturing-demo/acme:/var/www/certbot \
-  certbot/certbot:v5.4.0 certonly --webroot -w /var/www/certbot \
-  --ip-address 83.147.192.229 --cert-name manufacturing-demo-ip \
-  --preferred-profile shortlived --non-interactive --agree-tos --register-unsafely-without-email
-```
+This is an analytics and operations laboratory. Inventory uses a fixed teaching snapshot; it is not a complete stock-movement ledger or MRP system. Claims do not create accounting entries, and project milestones are read-only. Business scenarios and the sample quality certificate are fictional. The public demo has no production user/approval workflow, customer deployment or measured business savings. Backup copies currently remain on the same server; external backup export is disabled.
 
-Таймер `manufacturing-demo-tls.timer` каждые шесть часов запускает `deploy/renew-tls.sh`. После успешной проверки продления скрипт проверяет конфигурацию Nginx и перезагружает сертификат. Если у сертификата осталось меньше двух дней, выполнение помечается ошибкой. Почтовые уведомления не настроены; состояние видно через systemd:
+## Documentation
 
-```sh
-systemctl status manufacturing-demo-tls.timer
-journalctl -u manufacturing-demo-tls.service --since '2 days ago'
-sh /opt/manufacturing-demo/deploy/renew-tls.sh --dry-run
-```
+- [Portfolio walkthrough and design decisions](docs/PORTFOLIO.md)
+- [Full setup and feature documentation, in Russian](README.ru.md)
+- [Data model and exercises, in Russian](docs/training-notes.md)
+- [Deployment](deploy/README.md) · [CI/CD](deploy/CI-CD.md) · [Operations](deploy/OPERATIONS.md)
 
-Скрипт использует блокировку от одновременных запусков. Для установки таймера оператор копирует `deploy/manufacturing-demo-tls.{service,timer}` в `/etc/systemd/system`, выполняет `systemctl daemon-reload` и `systemctl enable --now manufacturing-demo-tls.timer`. Веб-контейнер должен запускаться с `compose.https.yaml`; обычный CI/CD пересобирает только приложение и сохраняет существующий HTTPS-контейнер.
-
-## Лаборатория эксплуатации
-
-В разделе здоровья добавлены резервирование, проверки восстановления, журнал изменений и MongoDB-протоколы испытаний. История заказа доступна в его карточке. Административные изменения — только через SSH; исходные финансовые данные не меняются демонстрационным сценарием. Вся инфраструктура пока на одном сервере, внешняя выгрузка отключена.
-
-**Каталоги, cron, сроки хранения и команды:** [deploy/OPERATIONS.md](deploy/OPERATIONS.md). Миграция существующей БД: `db/migrations/08-operations.sql`. MongoDB для локальной разработки включается профилем `operations`; публичный сервер использует `compose.demo.yaml`.
+**Contact:** [Grigory Shmykov on LinkedIn](https://www.linkedin.com/in/grigory-shmykov-63b11016b/)
